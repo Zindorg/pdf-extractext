@@ -40,11 +40,27 @@ class PDFService(PDFServiceInterface):
             InvalidFileException: If file is not valid
             PDFExtractionException: If extraction fails
         """
-        if not filename.endswith(".pdf"):
-            raise InvalidFileException("File must be a PDF")
+        # Validate null inputs
+        if filename is None:
+            raise InvalidFileException("Filename cannot be null")
+
+        if file_content is None:
+            raise InvalidFileException("File content cannot be null")
+
+        # Validate type
+        if not isinstance(filename, str):
+            raise InvalidFileException("Filename must be a string")
+
+        # Validate empty inputs
+        if filename.strip() == "":
+            raise InvalidFileException("Filename cannot be empty")
 
         if len(file_content) == 0:
             raise InvalidFileException("File is empty")
+
+        # Validate extension
+        if not filename.endswith(".pdf"):
+            raise InvalidFileException("File must be a PDF")
 
         try:
             # Extract text

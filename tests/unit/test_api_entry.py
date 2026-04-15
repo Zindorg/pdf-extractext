@@ -383,3 +383,65 @@ class TestAPIUploadEmptyContentValidation:
         )
 
         assert response.status_code == 400
+
+
+class TestAPIUploadSizeValidation:
+    """Tests for file size validation in API uploads."""
+
+    def test_upload_pdf_rejects_file_larger_than_10mb(self):
+        """Should return 413 when file exceeds max size."""
+        from core.config import settings
+
+        mock_service = MagicMock()
+        app = create_test_app(mock_service)
+        client = TestClient(app)
+
+        large_content = b"x" * (settings.max_file_size + 1)
+
+        response = client.post(
+            "/pdf/upload",
+            files={"file": ("large.pdf", large_content, "application/pdf")},
+        )
+
+        assert response.status_code == 413
+
+
+class TestAPIExtractEndpoint:
+    """Tests for PDF extraction endpoint."""
+
+    def test_extract_from_existing_pdf(self):
+        """Should return extracted text for existing PDF."""
+        from models.pdf_document import PDFDocument
+
+        mock_doc = PDFDocument(
+            id="abc123",
+            filename="document.pdf",
+            text_content="Extracted text",
+            page_count=5,
+        )
+
+        mock_service = MagicMock()
+        mock_service.extract_text_from_pdf = AsyncMock(return_value=mock_doc)
+
+        app = create_test_app(mock_service)
+        client = TestClient(app)
+
+        response = client.post("/pdf/abc123/extract")
+
+        assert response.status_code == 200
+
+    def test_extract_nonexistent_pdf(self):
+        """Should return 404 when PDF does not exist."""
+        from core.exceptions import PDFExtractionException
+
+        mock_service = MagicMock()
+        mock_service.extract_text_from_pdf = AsyncMock(
+            side_effect=PDFExtractionException("PDF not found")
+        )
+
+        app = create_test_app(mock_service)
+        client = TestClient(app)
+
+        response = client.post("/pdf/xyz789/extract")
+
+        assert response.status_code == 404

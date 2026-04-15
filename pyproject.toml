@@ -48,3 +48,9 @@ py-modules = []
 where = ["."]
 include = ["api*", "core*", "models*", "services*", "repositories*", "infrastructure*"]
 exclude = ["tests*", ".venv*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "reportlab>=4.4.10",
+]

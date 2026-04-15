@@ -16,7 +16,7 @@ dependencies = [
     "pydantic>=2.10.0",
     "pydantic-settings>=2.8.0",
     "pymongo==4.6.0",
-    "python-dotenv== 1.2.2",
+    "python-dotenv==1.2.2",
 ]
 
 [project.optional-dependencies]

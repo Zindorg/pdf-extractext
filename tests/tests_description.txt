@@ -1,121 +1,37 @@
 # Tests Description - PDF Extractext
 
-## Resumen de Tests
+## Descripción de Tests por Archivo
 
-- **Tests originales:** 43
-- **Tests nuevos acordados:** 7
-- **Tests totales:** 50
+### test_api_entry.py
+Validación de entrada en endpoints de la API:
+- Rechazo de valores null en uploads
+- Rechazo de paths vacíos
+- Validación de tipos de filename
+- Validación de extensiones de archivo
+- Validación de contenido vacío
+- Validación de tamaño máximo de archivo
+- Endpoint de extracción de texto
 
----
+### test_service_entry.py
+Validación de parámetros en la capa de servicios:
+- Rechazo de valores null en filename y contenido
+- Rechazo de paths/filenames vacíos
+- Validación de tipos de entrada
+- Validación de extensiones de archivo
 
-## Tests Originales (43 tests)
+### test_extractor.py
+Extracción de texto desde archivos PDF:
+- Extracción básica de contenido
+- Manejo de archivos vacíos
+- Extracción por rango de páginas
+- Manejo de contenido Unicode
 
-### test_api_entry.py (18 tests)
-Clases con tests existentes antes de esta iteración:
-- `TestAPIUploadNullValidation` - 2 tests (rechazo de null)
-- `TestAPIUploadEmptyPathValidation` - 2 tests (rechazo de paths vacíos)
-- `TestAPIUploadTypeValidation` - 1 test (tipos de filename)
-- `TestAPIUploadExtensionValidation` - 9 tests (extensiones de archivo)
-- `TestAPIUploadEmptyContentValidation` - 1 test (contenido vacío)
-
-### test_service_entry.py (21 tests)
-Clases con tests existentes:
-- `TestPDFServiceNullInputValidation` - 3 tests
-- `TestPDFServiceEmptyPathValidation` - 3 tests
-- `TestPDFServiceTypeValidation` - 5 tests
-- `TestPDFServiceExtensionValidation` - 10 tests
-
-### test_file_management.py (4 tests)
-Clases con tests existentes:
-- `TestFileNotFound` - 3 tests
-- `TestInvalidFileContent` - 4 tests
-- `TestFileSystemEdgeCases` - 2 tests
-
----
-
-## Tests Nuevos Acordados (7 tests)
-
-### Alta Prioridad (3 tests)
-
-#### 1. Límite de tamaño de archivo
-**Archivo:** `test_api_entry.py`  
-**Clase:** `TestAPIUploadSizeValidation`  
-**Test:** `test_upload_pdf_rejects_file_larger_than_10mb`  
-**Descripción:** Verifica que el endpoint `/pdf/upload` rechace archivos mayores a 10MB con HTTP 413.
-
-#### 2. Extracción por rango de páginas
-**Archivo:** `test_extractor.py`  
-**Test:** `test_extract_page_range_valid`  
-**Descripción:** Verifica que `extract_text_from_page_range()` extraiga correctamente subconjuntos de páginas.
-
-#### 3. Endpoint de extracción
-**Archivo:** `test_api_entry.py`  
-**Clase:** `TestAPIExtractEndpoint`  
-**Tests:**
-- `test_extract_from_existing_pdf` - Extrae texto de PDF existente
-- `test_extract_nonexistent_pdf` - Retorna 404 cuando no existe
-
-### Media Prioridad (4 tests)
-
-#### 4. Modelo PDFDocument
-**Archivo:** No aplica (no agregado - ya cubierto por tests existentes)
-**Estado:** OMITIDO - Los tests originales ya cubren la funcionalidad básica
-
-#### 5. Error wrapping del extractor
-**Archivo:** `test_service_entry.py`  
-**Clase:** `TestPDFServiceErrorHandling`  
-**Test:** `test_process_pdf_wraps_extractor_errors`  
-**Descripción:** Asegura que el servicio envuelva errores del extractor en `PDFExtractionException`.
-
-#### 6. Delete exitoso
-**Archivo:** `test_file_management.py`  
-**Clase:** `TestRepositoryCRUD` (nueva)
-**Tests:**
-- `test_delete_returns_true_for_existing_file` - Elimina archivo existente
-- `test_get_returns_path_for_existing_file` - Obtiene path de archivo existente
-
-#### 7. Contenido Unicode
-**Archivo:** `test_extractor.py`  
-**Test:** `test_extract_text_with_unicode`  
-**Descripción:** Valida extracción correcta de caracteres especiales (tildes, ñ, etc).
-
----
-
-## Fixtures Generados (8 archivos)
-
-| Fixture | Tamaño | Propósito |
-|---------|--------|-----------|
-| `valid.pdf` | ~1.4KB | PDF con texto extraíble |
-| `empty.pdf` | ~311 bytes | PDF válido con 0 páginas |
-| `multipage.pdf` | ~3.4KB | PDF de 5 páginas con texto diferente |
-| `corrupted.pdf` | ~30 bytes | Header inválido (PDF-0.0) |
-| `zero_bytes.pdf` | 0 bytes | Archivo realmente vacío |
-| `large.pdf` | ~11MB | Excede límite de 10MB |
-| `unicode.pdf` | ~1.5KB | Texto con tildes y ñ |
-| `image_only.pdf` | ~1.7KB | Imagen sin texto extraíble |
-
-**Nota:** Los fixtures se generan con el script `tests/fixtures/generate_fixtures.py`
-
----
-
-## Principios Aplicados
-
-### Clean Code
-- Funciones pequeñas (<20 líneas)
-- Nombres descriptivos (verbos para acciones)
-- Sin comentarios innecesarios
-- Clases solo cuando agrupan tests relacionados (usando clases originales)
-
-### TDD
-- Tests independientes
-- Un assert por test (ideal)
-- Tests como especificación de comportamiento
-- Sin tests acoplados a implementación
-
-### KISS (Keep It Simple, Stupid)
-- 7 tests nuevos, no más
-- Sin over-engineering
-- Soluciones directas y simples
+### test_file_management.py
+Manejo de archivos y casos edge:
+- Archivos no encontrados
+- Contenido inválido o corrupto
+- Casos edge del sistema de archivos
+- Caracteres especiales en filenames
 
 ---
 
@@ -125,7 +41,7 @@ Clases con tests existentes:
 # Ejecutar todos los tests
 uv run pytest tests/unit/ -v
 
-# Ejecutar tests específicos
+# Ejecutar archivo específico
 uv run pytest tests/unit/test_api_entry.py -v
 uv run pytest tests/unit/test_extractor.py -v
 uv run pytest tests/unit/test_service_entry.py -v
@@ -134,30 +50,3 @@ uv run pytest tests/unit/test_file_management.py -v
 # Generar fixtures (si es necesario)
 uv run python tests/fixtures/generate_fixtures.py
 ```
-
-## Comandos de Desarrollo
-
-```bash
-# Verificar sintaxis Python
-python3 -m py_compile tests/unit/test_api_entry.py
-
-# Contar tests
-uv run pytest tests/unit/ --collect-only -q
-
-# Ejecutar con cobertura (opcional)
-uv run pytest tests/unit/ --cov=. --cov-report=html
-
-# Ejecutar en modo silencioso
-uv run pytest tests/unit/ -q
-```
-
----
-
-## Cobertura
-
-Los tests cubren:
-- ✅ API: Validaciones de entrada, extensiones, tamaño, extracción
-- ✅ Service: Validaciones de filename, contenido, extensiones, errores
-- ✅ Extractor: Extracción básica, rangos de páginas, unicode
-- ✅ Repository: Guardar, obtener, eliminar archivos
-- ✅ File Management: Casos edge, caracteres especiales

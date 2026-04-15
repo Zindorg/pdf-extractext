@@ -106,10 +106,10 @@ Proyecto desarrollado por el equipo de **PDF-Extractext** como trabajo práctico
 
 | Nombre | Rol | GitHub |
 |--------|-----|--------|
-| **Zinik Facundo** | Desarrollador Backend | [@Facundo Nahuel Zinik](https://github.com/Zindorg) |
-| **Velez Marcos** | Desarrollador Backend |[@Marcos Velez](https://github.com/marcos-velez-20) |
-| **Gonzalez Ignacio Matias** | Desarrollador Backend | [@Matias Ignacio Gonzalez](https://github.com/MatiGonza3)  |
-| **Monardi Dalma** | Desarrolladora Backend | [@Dalma Monardi](https://github.com/DalmaM1105) |
+| **Zinik Facundo** | - | [@Facundo Nahuel Zinik](https://github.com/Zindorg) |
+| **Velez Marcos** | - |[@Marcos Velez](https://github.com/marcos-velez-20) |
+| **Gonzalez Ignacio Matias** | - | [@Matias Ignacio Gonzalez](https://github.com/MatiGonza3)|
+| **Monardi Dalma** | - | [@Dalma Monardi](https://github.com/DalmaM1105) |
 
 ---
 

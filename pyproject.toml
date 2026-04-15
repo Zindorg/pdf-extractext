@@ -4,22 +4,29 @@ version = "0.1.0"
 description = "Extractor de texto de PDFs con arquitectura 3 capas"
 readme = "README.md"
 requires-python = ">=3.13"
-
-authors=[{name="Zinik Facundo"},{name="Velez Marcos"},
-{name= "Gonzalez Ignacio Matias"},{name="Monardi Dalma"}
+authors = [
+    { name = "Zinik Facundo" },
+    { name = "Velez Marcos" },
+    { name = "Gonzalez Ignacio Matias" },
+    { name = "Monardi Dalma" },
 ]
+
+# Dependencias principales del proyecto
+# Solo incluimos paquetes necesarios para la ejecución en producción
 dependencies = [
+    # Framework web y servidor ASGI
     "fastapi>=0.115.0",
-    "uvicorn>=0.34.0",
+    "uvicorn[standard]>=0.34.0",
     "python-multipart>=0.0.20",
     "pypdf>=5.0.0",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.8.0",
-    "pymongo==4.6.0",
-    "python-dotenv==1.2.2",
+    "pymongo>=4.6.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
+# Tests - Requeridas para ejecutar el suite de tests
 test = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
@@ -27,12 +34,19 @@ test = [
     "httpx>=0.27.0",
 ]
 
+# Desarrollo - Herramientas adicionales para desarrolladores
+dev = [
+    "pdf-extractext[test]",
+    "reportlab>=4.0.0",
+]
+
+# Configuración de pytest
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = ["."]
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "slow: marks tests as slow (deselect with '-m 'not slow'')",
     "integration: marks tests as integration tests",
 ]
 addopts = [
@@ -41,16 +55,29 @@ addopts = [
     "--strict-markers",
 ]
 
-[tool.setuptools]
-py-modules = []
-
+# Configuración de setuptools para encontrar paquetes
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["api*", "core*", "models*", "services*", "repositories*", "infrastructure*"]
-exclude = ["tests*", ".venv*"]
+exclude = ["tests*", ".venv*", "__pycache__*"]
 
-[dependency-groups]
-dev = [
-    "pytest>=9.0.3",
-    "reportlab>=4.4.10",
+[tool.setuptools]
+py-modules = []
+
+# Configuración de cobertura
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "*/tests/*",
+    "conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
 ]

@@ -25,27 +25,16 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 ## ⭐ Características
 
-- 📄 **Extracción de texto** de PDFs con soporte multi-página
-- 🔍 **Validación automática** de archivos (formato, tamaño, contenido no vacío)
-- 🗃️ **Almacenamiento persistente** en MongoDB con metadatos completos
-- ⚡ **API RESTful** construida con FastAPI y documentación automática
-- ✅ **Tests unitarios** con pytest y cobertura de código
-- 🏗️ **Arquitectura limpia** de 3 capas (Presentación, Aplicación, Datos)
-- 📝 **Generación de archivos `.txt`** con el contenido extraído
-- 🔒 **Manejo de errores** robusto con excepciones personalizadas
+- **Extracción de texto** de PDFs con soporte multi-página
+- **Validación automática** de archivos (formato, tamaño, contenido no vacío)
+- **Almacenamiento persistente** en MongoDB con metadatos completos
+- **API RESTful** construida con FastAPI y documentación automática
+- **Tests unitarios** con pytest y cobertura de código
+- **Arquitectura limpia** de 3 capas (Presentación, Aplicación, Datos)
+- **Generación de archivos `.txt`** con el contenido extraído
+-  **Manejo de errores** robusto con excepciones personalizadas
 
 ---
-
-## 📋 Requisitos Previos
-
-Antes de comenzar, asegúrate de tener instalado:
-
-- **Python 3.13+** - [Descargar Python](https://www.python.org/downloads/)
-- **UV** - Gestor de paquetes ultra-rápido para Python
-  - Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
-  - Linux/Mac: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- **MongoDB** (opcional para desarrollo local)
-  - Puede usar [MongoDB Atlas](https://www.mongodb.com/atlas) (gratuito) o instalar localmente
 
 ---
 
@@ -94,9 +83,6 @@ Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de softwa
 ### Arquitectura
 
 - **Clean Architecture** - Separación clara de responsabilidades
-- **Dependency Injection** - Inyección de dependencias para testabilidad
-- **Repository Pattern** - Abstracción del acceso a datos
-- **Adapter Pattern** - Adaptadores para servicios externos (extracción PDF)
 
 ---
 
@@ -140,10 +126,3 @@ SOFTWARE.
 ```
 
 ---
-
-<div align="center">
-  <p>⭐ Desarrollado con Python, FastAPI y MongoDB ⭐</p>
-  <p>
-    <a href="https://github.com/Zindorg/pdf-extractext">GitHub Repository</a>
-  </p>
-</div>

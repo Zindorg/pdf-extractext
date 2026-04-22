@@ -1,4 +1,4 @@
-# 📄 PDF-Extractext
+# PDF-Extractext
 
 [![Python 3.13](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -11,7 +11,7 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 ---
 
-## 📑 Tabla de Contenidos
+## Tabla de Contenidos
 
 - [Características](#-características)
 - [Requisitos Previos](#-requisitos-previos)
@@ -23,7 +23,7 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 ---
 
-## ⭐ Características
+## Características
 
 - **Extracción de texto** de PDFs con soporte multi-página
 - **Validación automática** de archivos (formato, tamaño, contenido no vacío)
@@ -48,7 +48,7 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 La API expone los siguientes endpoints para gestionar archivos PDF:
 
@@ -58,15 +58,15 @@ La API expone los siguientes endpoints para gestionar archivos PDF:
 | `POST` | `/pdf/{file_id}/extract` | Extraer texto de páginas específicas de un PDF existente | `JSON` con `start_page` y `end_page` opcionales | `PDFExtractResponse` con texto completo |
 ---
 
-## 🎯 Principios Aplicados
+## Principios Aplicados
 
 Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de software:
 
 ### Metodologías
 
-- ✅ **TDD (Test Driven Development)** - Tests escritos antes del código de producción
-- ✅ **Desarrollo dirigido en GitHub** - Control de versiones y gestión de tareas
-- ✅ **12-Factor App** - Aplicación de los 6 primeros principios para apps cloud-native
+- **TDD (Test Driven Development)** - Tests escritos antes del código de producción
+- **Desarrollo dirigido en GitHub** - Control de versiones y gestión de tareas
+- **12-Factor App** - Aplicación de los 6 primeros principios para apps cloud-native
 
 ### Principios de Programación
 
@@ -86,7 +86,7 @@ Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de softwa
 
 ---
 
-## 👥 Autores
+## Autores
 
 Proyecto desarrollado por el equipo de **PDF-Extractext** como trabajo práctico universitario.
 
@@ -99,7 +99,7 @@ Proyecto desarrollado por el equipo de **PDF-Extractext** como trabajo práctico
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 ```
 MIT License

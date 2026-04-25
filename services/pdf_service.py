@@ -1,12 +1,32 @@
 """Business logic service for PDF processing."""
 
+import re
+import tempfile
 from pathlib import Path
+from typing import Tuple
 
 from models.pdf_document import PDFDocument
 from repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
 from services.interfaces.pdf_service_interface import PDFServiceInterface
 from infrastructure import pdf_extractor
 from core.exceptions import PDFExtractionException, InvalidFileException
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize filename for temporary file creation.
+
+    Args:
+        filename: Original filename
+
+    Returns:
+        Sanitized filename without extension
+    """
+    # Remove extension
+    base = Path(filename).stem
+    # Replace special characters with underscore
+    sanitized = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
+    # Limit to 50 characters, use "document" if empty
+    return sanitized[:50] or "document"
 
 
 def _validate_filename(filename: str) -> None:
@@ -32,6 +52,67 @@ class PDFService(PDFServiceInterface):
     def __init__(self, repository: PDFRepositoryInterface) -> None:
         """Initialize service with repository."""
         self._repository = repository
+        self._last_extracted_text: str = ""
+        self._last_temp_path: Path | None = None
+
+    def generate_text_file(self, file_content: bytes, filename: str) -> Tuple[str, Path]:
+        """
+        Extract text from PDF bytes and create temporary .txt file.
+
+        Args:
+            file_content: Binary PDF content
+            filename: Original filename for naming the .txt
+
+        Returns:
+            Tuple of (extracted text, path to temporary .txt file)
+
+        Raises:
+            InvalidFileException: If input is invalid
+            PDFExtractionException: If extraction fails
+
+        Note:
+            PDF content is processed in memory only and NOT persisted.
+            The caller is responsible for cleaning up the temporary file.
+        """
+        # Validation
+        if not file_content:
+            raise InvalidFileException("File content is empty")
+        if not filename:
+            raise InvalidFileException("Filename is empty")
+
+        # Extract text directly from bytes (PDF stays in memory only)
+        try:
+            text, _ = pdf_extractor.extract_text(file_content)
+        except Exception as e:
+            raise PDFExtractionException(f"Text extraction failed: {e}") from e
+
+        # Store references for potential cleanup
+        self._last_extracted_text = text
+
+        # Create temp file with simplified name
+        base_name = _sanitize_filename(filename)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".txt",
+            prefix=f"{base_name}_",
+            delete=False,
+            encoding="utf-8",
+        ) as tmp_file:
+            tmp_file.write(text)
+            self._last_temp_path = Path(tmp_file.name)
+
+        return text, self._last_temp_path
+
+    def cleanup_memory(self) -> None:
+        """
+        Clear internal memory references after processing.
+
+        Note:
+            This does NOT delete temporary files. The webapp
+            is responsible for managing file lifecycle.
+        """
+        self._last_extracted_text = ""
+        self._last_temp_path = None
 
     async def process_pdf(self, file_content: bytes, filename: str) -> PDFDocument:
         """

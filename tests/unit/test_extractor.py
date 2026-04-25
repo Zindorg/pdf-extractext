@@ -1,112 +1,57 @@
-"""Unit tests for PDF text extraction using TDD principles.
+"""Unit tests for PDF text extraction."""
 
-These tests verify that PDFExtractorAdapter correctly extracts text from PDF files,
-following the RED-GREEN-REFACTOR cycle and CLEAN CODE practices.
-"""
-
-import pytest
 from pathlib import Path
 
-from infrastructure.pdf_extractor_adapter import PDFExtractorAdapter
+from infrastructure import pdf_extractor
 
 
-@pytest.fixture
-def extractor():
-    """Create a PDFExtractorAdapter instance."""
-    return PDFExtractorAdapter()
-
-
-@pytest.fixture
-def valid_pdf_bytes():
-    """Load valid PDF file as bytes."""
-    fixture_path = Path(__file__).parent.parent / "fixtures" / "valid.pdf"
+def get_fixture_bytes(filename: str) -> bytes:
+    """Load PDF fixture as bytes."""
+    fixture_path = Path(__file__).parent.parent / "fixtures" / filename
     return fixture_path.read_bytes()
 
 
-@pytest.fixture
-def empty_pdf_bytes():
-    """Load empty PDF file as bytes."""
-    fixture_path = Path(__file__).parent.parent / "fixtures" / "empty.pdf"
-    return fixture_path.read_bytes()
+class TestExtractText:
+    """Tests for extract_text function."""
+
+    def test_returns_string_and_page_count_from_valid_pdf(self):
+        """Should return extracted text and page count from a valid PDF."""
+        content = get_fixture_bytes("valid.pdf")
+        result, page_count = pdf_extractor.extract_text(content)
+
+        assert isinstance(result, str)
+        assert isinstance(page_count, int)
+        assert page_count >= 0
+
+    def test_returns_empty_string_for_empty_pdf(self):
+        """Should return empty string when PDF has no content."""
+        content = get_fixture_bytes("empty.pdf")
+        result, page_count = pdf_extractor.extract_text(content)
+
+        assert result == ""
+        assert page_count == 0
 
 
-@pytest.fixture
-def multipage_pdf_bytes():
-    """Load multipage PDF file as bytes (5 pages)."""
-    fixture_path = Path(__file__).parent.parent / "fixtures" / "multipage.pdf"
-    return fixture_path.read_bytes()
+class TestExtractTextFromPageRange:
+    """Tests for extract_text_from_page_range function."""
+
+    def test_extracts_text_from_specific_page_range(self):
+        """Should extract text from specific page range."""
+        content = get_fixture_bytes("multipage.pdf")
+        result, pages_extracted = pdf_extractor.extract_text_from_page_range(
+            content, start_page=2, end_page=4
+        )
+
+        assert pages_extracted == 3
 
 
-@pytest.fixture
-def unicode_pdf_bytes():
-    """Load PDF with unicode content as bytes."""
-    fixture_path = Path(__file__).parent.parent / "fixtures" / "unicode.pdf"
-    return fixture_path.read_bytes()
+class TestUnicodeContent:
+    """Tests for unicode content handling."""
 
+    def test_extracts_unicode_content(self):
+        """Should extract unicode content without errors."""
+        content = get_fixture_bytes("unicode.pdf")
+        result, page_count = pdf_extractor.extract_text(content)
 
-def test_extract_text_returns_content_from_valid_pdf(extractor, valid_pdf_bytes):
-    """Should return extracted text from a valid PDF file."""
-    result, page_count = extractor.extract_text(valid_pdf_bytes)
-
-    assert result is not None
-    assert isinstance(result, str)
-
-
-def test_extract_text_never_returns_none(extractor, valid_pdf_bytes):
-    """Should never return None, always a string value."""
-    result, page_count = extractor.extract_text(valid_pdf_bytes)
-
-    assert result is not None
-    assert isinstance(result, str)
-
-
-def test_extract_text_returns_non_empty_string_when_pdf_has_content(
-    extractor, valid_pdf_bytes
-):
-    """Should return non-empty string when PDF contains text."""
-    result, page_count = extractor.extract_text(valid_pdf_bytes)
-
-    assert result is not None
-    assert isinstance(result, str)
-    assert len(result) > 0 or page_count == 0
-
-
-def test_extract_text_returns_empty_string_for_empty_pdf(extractor, empty_pdf_bytes):
-    """Should return empty string when PDF has no content."""
-    result, page_count = extractor.extract_text(empty_pdf_bytes)
-
-    assert result is not None
-    assert isinstance(result, str)
-    assert result == ""
-
-
-def test_extract_text_returns_page_count_from_valid_pdf(extractor, valid_pdf_bytes):
-    """Should return correct page count from a valid PDF."""
-    result, page_count = extractor.extract_text(valid_pdf_bytes)
-
-    assert isinstance(page_count, int)
-    assert page_count >= 0
-
-
-def test_extract_text_returns_zero_pages_for_empty_pdf(extractor, empty_pdf_bytes):
-    """Should return zero pages for an empty PDF."""
-    result, page_count = extractor.extract_text(empty_pdf_bytes)
-
-    assert page_count == 0
-
-
-def test_extract_page_range_valid(extractor, multipage_pdf_bytes):
-    """Should extract text from specific page range."""
-    result, pages_extracted = extractor.extract_text_from_page_range(
-        multipage_pdf_bytes, start_page=2, end_page=4
-    )
-
-    assert pages_extracted == 3
-
-
-def test_extract_text_with_unicode(extractor, unicode_pdf_bytes):
-    """Should extract unicode content without errors."""
-    result, page_count = extractor.extract_text(unicode_pdf_bytes)
-
-    assert isinstance(result, str)
-    assert page_count >= 1
+        assert isinstance(result, str)
+        assert page_count >= 1

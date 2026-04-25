@@ -9,7 +9,6 @@ from api.schemas.pdf_schemas import (
 )
 from core.config import settings
 from core.exceptions import PDFExtractextException
-from infrastructure.pdf_extractor_adapter import PDFExtractorAdapter
 from repositories.pdf_repository import PDFRepository
 from services.pdf_service import PDFService
 
@@ -18,9 +17,7 @@ router = APIRouter(prefix="/pdf", tags=["PDF"])
 
 def get_pdf_service() -> PDFService:
     """Dependency injection for PDF service."""
-    repository = PDFRepository()
-    extractor = PDFExtractorAdapter()
-    return PDFService(repository, extractor)
+    return PDFService(PDFRepository())
 
 
 @router.post("/upload", response_model=PDFUploadResponse)

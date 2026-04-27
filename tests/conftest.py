@@ -15,6 +15,11 @@ def mock_repository():
     mock = MagicMock(spec=PDFRepositoryInterface)
     mock.save = AsyncMock(return_value=None)
     mock.get = AsyncMock(return_value=None)
+    mock.create = MagicMock(return_value=None)
+    mock.find_by_id = MagicMock(return_value=None)
+    mock.find_by_checksum = MagicMock(return_value=None)
+    mock.find_all = MagicMock(return_value=[])
+    mock.delete_by_id = MagicMock(return_value=False)
     return mock
 
 

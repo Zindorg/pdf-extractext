@@ -86,11 +86,17 @@ class TestPDFServiceValidation:
         self, pdf_service, valid_pdf_content, mock_repository
     ):
         """Should accept valid PDF file."""
-        mock_repository.save = AsyncMock(
-            return_value=Path("/fake/path/abc123_document.pdf")
-        )
+        from models.pdf_document import PDFDocument
+
+        def mock_create(document):
+            document.id = "abc123"
+            return document
+
+        mock_repository.find_by_checksum.return_value = None
+        mock_repository.create.side_effect = mock_create
 
         result = await pdf_service.process_pdf(valid_pdf_content, "document.pdf")
 
         assert result.filename == "document.pdf"
         assert result.file_size == len(valid_pdf_content)
+        assert result.checksum is not None

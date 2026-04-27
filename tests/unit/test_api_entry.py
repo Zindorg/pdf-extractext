@@ -31,6 +31,7 @@ class TestUploadEndpoint:
     def test_accepts_valid_pdf(self):
         """Should accept and process valid PDF upload."""
         mock_doc = PDFDocument(
+            checksum="abc123checksum",
             id="abc123",
             filename="document.pdf",
             file_size=100,
@@ -94,6 +95,7 @@ class TestExtractEndpoint:
     def test_extracts_from_existing_pdf(self):
         """Should extract text from existing PDF."""
         mock_doc = PDFDocument(
+            checksum="abc123checksum",
             id="abc123",
             filename="document.pdf",
             text_content="Extracted text",

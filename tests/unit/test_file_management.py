@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-from repositories.pdf_repository import PDFRepository
+from repositories.file_pdf_repository import FilePDFRepository
 from services.pdf_service import PDFService
 from infrastructure import pdf_extractor
 from core.exceptions import PDFExtractionException, InvalidFileException
@@ -22,13 +22,13 @@ class TestFileNotFound:
 
     @pytest.fixture
     def repository_with_temp_dir(self, temp_upload_dir, monkeypatch):
-        """Create PDFRepository with temporary upload directory."""
+        """Create FilePDFRepository with temporary upload directory."""
         from core.config import Settings
 
         mock_settings = Settings(upload_dir=str(temp_upload_dir))
-        monkeypatch.setattr("repositories.pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
 
-        return PDFRepository()
+        return FilePDFRepository()
 
     @pytest.mark.asyncio
     async def test_returns_none_when_file_not_found(
@@ -46,9 +46,9 @@ class TestFileNotFound:
         from core.config import Settings
 
         mock_settings = Settings(upload_dir=str(temp_upload_dir))
-        monkeypatch.setattr("repositories.pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
 
-        repository = PDFRepository()
+        repository = FilePDFRepository()
         service = PDFService(repository)
 
         with pytest.raises(PDFExtractionException) as exc_info:
@@ -130,9 +130,9 @@ class TestFileSystemEdgeCases:
         upload_dir.mkdir()
 
         mock_settings = Settings(upload_dir=str(upload_dir))
-        monkeypatch.setattr("repositories.pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
 
-        repository = PDFRepository()
+        repository = FilePDFRepository()
 
         special_filenames = [
             "file with spaces.pdf",
@@ -161,9 +161,9 @@ class TestFileSystemEdgeCases:
         upload_dir.mkdir()
 
         mock_settings = Settings(upload_dir=str(upload_dir))
-        monkeypatch.setattr("repositories.pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
 
-        repository = PDFRepository()
+        repository = FilePDFRepository()
         filename = "duplicate.pdf"
         content = b"%PDF-1.4 test content"
 

@@ -1,15 +1,16 @@
 """Business logic service for PDF processing."""
 
+import hashlib
 import re
 import tempfile
 from pathlib import Path
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 from models.pdf_document import PDFDocument
 from repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
 from services.interfaces.pdf_service_interface import PDFServiceInterface
 from infrastructure import pdf_extractor
-from core.exceptions import PDFExtractionException, InvalidFileException
+from core.exceptions import PDFExtractionException, InvalidFileException, DuplicateDocumentException
 
 
 def _sanitize_filename(filename: str) -> str:
@@ -54,6 +55,17 @@ class PDFService(PDFServiceInterface):
         self._repository = repository
         self._last_extracted_text: str = ""
         self._last_temp_path: Path | None = None
+
+    def generate_checksum(self, file_content: bytes) -> str:
+        """Generate SHA-256 checksum from file content.
+
+        Args:
+            file_content: Binary file content
+
+        Returns:
+            Hexadecimal checksum string
+        """
+        return hashlib.sha256(file_content).hexdigest()
 
     def generate_text_file(self, file_content: bytes, filename: str) -> Tuple[str, Path]:
         """
@@ -114,16 +126,57 @@ class PDFService(PDFServiceInterface):
         self._last_extracted_text = ""
         self._last_temp_path = None
 
+    def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
+        """Find PDF document by checksum.
+
+        Args:
+            checksum: SHA-256 checksum string
+
+        Returns:
+            PDFDocument or None if not found
+        """
+        return self._repository.find_by_checksum(checksum)
+
+    def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
+        """Find PDF document by ID.
+
+        Args:
+            doc_id: Document unique identifier
+
+        Returns:
+            PDFDocument or None if not found
+        """
+        return self._repository.find_by_id(doc_id)
+
+    def find_all(self) -> List[PDFDocument]:
+        """Find all PDF documents.
+
+        Returns:
+            List of all PDFDocuments
+        """
+        return self._repository.find_all()
+
+    def delete_by_id(self, doc_id: str) -> bool:
+        """Delete PDF document by ID.
+
+        Args:
+            doc_id: Document unique identifier
+
+        Returns:
+            True if deleted, False if not found
+        """
+        return self._repository.delete_by_id(doc_id)
+
     async def process_pdf(self, file_content: bytes, filename: str) -> PDFDocument:
         """
-        Process a new PDF.
+        Process a new PDF and persist to MongoDB.
 
         Args:
             file_content: Binary PDF content
             filename: Original filename
 
         Returns:
-            PDFDocument with extracted data
+            PDFDocument with extracted data (existing if duplicate, new if not)
 
         Raises:
             InvalidFileException: If file is not valid
@@ -133,16 +186,29 @@ class PDFService(PDFServiceInterface):
         _validate_content(file_content)
 
         try:
-            text, page_count = pdf_extractor.extract_text(file_content)
-            file_path = await self._repository.save(file_content, filename)
+            # Generate checksum first
+            checksum = self.generate_checksum(file_content)
 
-            return PDFDocument(
-                id=file_path.stem.split("_")[0],
+            # Check for duplicate by checksum
+            existing = self.find_by_checksum(checksum)
+            if existing:
+                # Return existing document with duplicate flag
+                return existing
+
+            # Extract text and create document
+            text, page_count = pdf_extractor.extract_text(file_content)
+
+            document = PDFDocument(
+                checksum=checksum,
                 filename=filename,
                 file_size=len(file_content),
                 page_count=page_count,
                 text_content=text,
             )
+
+            # Persist to MongoDB
+            return self._repository.create(document)
+
         except InvalidFileException:
             raise
         except Exception as e:
@@ -174,8 +240,10 @@ class PDFService(PDFServiceInterface):
             text, pages_extracted = pdf_extractor.extract_text_from_page_range(
                 content, start_page, end_page
             )
+            checksum = self.generate_checksum(content)
 
             return PDFDocument(
+                checksum=checksum,
                 id=file_id,
                 filename=file_path.name.split("_", 1)[1],
                 page_count=pages_extracted,

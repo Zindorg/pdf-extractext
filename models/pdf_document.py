@@ -9,10 +9,11 @@ from typing import Optional
 class PDFDocument:
     """Entity representing a PDF document."""
 
+    checksum: str
+    filename: str
+    text_content: str
     id: Optional[str] = None
-    filename: str = ""
     content_type: str = "application/pdf"
-    text_content: str = ""
     page_count: int = 0
     file_size: int = 0
     created_at: Optional[datetime] = None

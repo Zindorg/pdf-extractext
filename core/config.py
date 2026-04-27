@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     max_file_size: int = 10 * 1024 * 1024  # 10MB
 
+    # MongoDB Configuration (user provides these)
+    mongodb_uri: str = "mongodb://localhost:27017"
+    mongodb_database: str = "pdf_extractext"
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

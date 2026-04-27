@@ -1,4 +1,7 @@
-"""Main application entry point with MongoDB configuration."""
+"""Example main.py with MongoDB configuration.
+
+Copy this to main.py or adapt your existing main.py.
+"""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,13 +35,9 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # ============================================================
-    # USER CONFIGURATION: MongoDB Connection
-    # ============================================================
-    # YOU configure the MongoDB connection here
+    # USER CONFIGURATION: Set up MongoDB connection
+    # You provide the MongoDB client - the app handles the rest
     mongo_client = MongoClient(settings.mongodb_uri)
-
-    # Create repository with your MongoDB client
     mongo_repository = MongoPDFRepository(
         mongo_client,
         database=settings.mongodb_database
@@ -46,7 +45,6 @@ def create_application() -> FastAPI:
 
     # Inject repository into routes
     set_pdf_repository(mongo_repository)
-    # ============================================================
 
     # Include routers
     application.include_router(pdf_routes.router)

@@ -3,16 +3,22 @@
 from pymongo import ASCENDING, DESCENDING
 from pymongo.collection import Collection
 from pymongo.database import Database
-from pymongo.mongo_client import MongoClient
+
+from infrastructure.database_connection import get_database
 
 
-def create_indexes(db: Database) -> None:
+def create_indexes(db: Database = None) -> None:
     """Create all required indexes for the application.
 
     Args:
-        db: MongoDB database instance
+        db: MongoDB database instance. If None, uses singleton.
+
+    Example:
+        >>> from infrastructure.database_setup import create_indexes
+        >>> create_indexes()  # Crea índices en la BD por defecto
     """
-    collection: Collection = db["pdf_documents"]
+    database = db or get_database()
+    collection: Collection = database["pdf_documents"]
 
     # Unique index on checksum for duplicate detection
     collection.create_index(
@@ -34,31 +40,31 @@ def create_indexes(db: Database) -> None:
     )
 
 
-def setup_database(mongo_uri: str, database_name: str = "pdf_extractext") -> Database:
+def setup_database() -> Database:
     """Initialize database with proper configuration.
 
-    Args:
-        mongo_uri: MongoDB connection URI
-        database_name: Name of the database
-
     Returns:
-        Configured database instance
+        Configured database instance from singleton.
+
+    Example:
+        >>> from infrastructure.database_setup import setup_database
+        >>> db = setup_database()
+        >>> # Database ready with indexes
     """
-    client: MongoClient = MongoClient(mongo_uri)
-    db: Database = client[database_name]
-
+    db = get_database()
     create_indexes(db)
-
     return db
 
 
-def get_collection(db: Database) -> Collection:
-    """Get the pdf_documents collection.
-
-    Args:
-        db: MongoDB database instance
+def get_collection() -> Collection:
+    """Get the pdf_documents collection from singleton connection.
 
     Returns:
-        Collection instance for pdf_documents
+        Collection instance for pdf_documents.
+
+    Example:
+        >>> from infrastructure.database_setup import get_collection
+        >>> collection = get_collection()
+        >>> collection.insert_one({"checksum": "abc123"})
     """
-    return db["pdf_documents"]
+    return get_database()["pdf_documents"]

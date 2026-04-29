@@ -2,12 +2,12 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pymongo import MongoClient
 
 from api.routes import pdf_routes
 from api.routes.pdf_routes import set_pdf_repository
 from core.config import settings
-from repositories.mongo_pdf_repository import MongoPDFRepository
+from infrastructure.database_setup import setup_database
+from repositories.repository_factory import RepositoryFactory
 
 
 def create_application() -> FastAPI:
@@ -33,16 +33,13 @@ def create_application() -> FastAPI:
     )
 
     # ============================================================
-    # USER CONFIGURATION: MongoDB Connection
+    # MongoDB Connection Setup
     # ============================================================
-    # YOU configure the MongoDB connection here
-    mongo_client = MongoClient(settings.mongodb_uri)
+    # Initialize database with indexes
+    setup_database()
 
-    # Create repository with your MongoDB client
-    mongo_repository = MongoPDFRepository(
-        mongo_client,
-        database=settings.mongodb_database
-    )
+    # Get repository from factory (singleton pattern)
+    mongo_repository = RepositoryFactory.get_pdf_repository()
 
     # Inject repository into routes
     set_pdf_repository(mongo_repository)

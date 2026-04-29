@@ -1,14 +1,41 @@
-"""Unit tests for PDF service text extraction and temp file generation."""
+"""Unit tests for PDF service with CRUD operations."""
 
 import re
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 
-from core.exceptions import InvalidFileException, PDFExtractionException
+from core.exceptions import (
+    DuplicateDocumentException,
+    InvalidFileException,
+    PDFExtractionException,
+    PDFNotFoundException,
+)
+from models.pdf_document import PDFDocument
 from services.pdf_service import PDFService, _sanitize_filename
+
+
+@pytest.fixture
+def mock_repository():
+    """Create a mock PDF repository with CRUD methods."""
+    mock = MagicMock()
+    mock.create = MagicMock(return_value=None)
+    mock.find_by_id = MagicMock(return_value=None)
+    mock.find_by_checksum = MagicMock(return_value=None)
+    mock.find_all = MagicMock(return_value=[])
+    mock.update = MagicMock(return_value=None)
+    mock.soft_delete = MagicMock(return_value=False)
+    mock.delete_by_id = MagicMock(return_value=False)
+    mock.restore = MagicMock(return_value=False)
+    return mock
+
+
+@pytest.fixture
+def pdf_service(mock_repository):
+    """Create PDFService with mocked repository."""
+    return PDFService(repository=mock_repository)
 
 
 class TestSanitizeFilename:

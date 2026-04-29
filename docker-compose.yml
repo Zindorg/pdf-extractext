@@ -1,0 +1,18 @@
+services:
+  mongo:
+    image: mongo:8.2
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - mired
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${ROOT_PASSWORD}
+    command: --wiredTigerCacheSizeGB 0.5
+    volumes:
+      - ./data:/data/db
+
+networks:
+  mired:
+    external: true

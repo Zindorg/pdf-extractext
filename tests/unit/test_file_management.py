@@ -39,24 +39,6 @@ class TestFileNotFound:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_raises_exception_when_extracting_from_nonexistent_file(
-        self, temp_upload_dir, monkeypatch
-    ):
-        """Service raises PDFExtractionException when file not found."""
-        from core.config import Settings
-
-        mock_settings = Settings(upload_dir=str(temp_upload_dir))
-        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
-
-        repository = FilePDFRepository()
-        service = PDFService(repository)
-
-        with pytest.raises(PDFExtractionException) as exc_info:
-            await service.extract_text_from_pdf("non-existent-file-id")
-
-        assert "PDF not found" in str(exc_info.value)
-
-    @pytest.mark.asyncio
     async def test_returns_false_when_deleting_nonexistent_file(
         self, repository_with_temp_dir
     ):

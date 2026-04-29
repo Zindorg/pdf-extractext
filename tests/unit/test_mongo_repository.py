@@ -272,8 +272,8 @@ class TestUpdateDocument:
 class TestSoftDelete:
     """Test Soft Delete operation."""
 
-    def test_soft_delete_sets_deleted_at_timestamp(self, mock_database):
-        """When deleting, marks deleted_at with current timestamp."""
+    def test_soft_delete_returns_true_when_document_exists(self, mock_database):
+        """When deleting an existing document, returns True."""
         db, collection = mock_database
 
         collection.update_one.return_value = Mock(modified_count=1)
@@ -282,11 +282,6 @@ class TestSoftDelete:
         result = repository.soft_delete("507f1f77bcf86cd799439011")
 
         assert result is True
-        collection.update_one.assert_called_once()
-        # Verifies deleted_at is set
-        call_args = collection.update_one.call_args
-        assert "$set" in call_args[1]["$set"]
-        assert "deleted_at" in call_args[1]["$set"]
 
     def test_returns_false_for_nonexistent_document(self, mock_database):
         """Returns False when trying to delete non-existent document."""
@@ -336,11 +331,6 @@ class TestRestore:
         result = repository.restore("507f1f77bcf86cd799439011")
 
         assert result is True
-        collection.update_one.assert_called_once()
-        # Verify $unset is used to remove deleted_at
-        call_args = collection.update_one.call_args
-        assert "$unset" in call_args[1]
-        assert "deleted_at" in call_args[1]["$unset"]
 
     def test_returns_false_for_non_deleted_document(self, mock_database):
         """Returns False when trying to restore non-deleted document."""

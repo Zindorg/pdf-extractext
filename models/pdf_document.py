@@ -16,6 +16,7 @@ class PDFDocument:
     content_type: str = "application/pdf"
     page_count: int = 0
     file_size: int = 0
+    deleted_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

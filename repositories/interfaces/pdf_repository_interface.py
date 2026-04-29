@@ -66,7 +66,7 @@ class PDFRepositoryInterface(ABC):
     @abstractmethod
     def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
         """
-        Find document by ID.
+        Find active document by ID.
 
         Args:
             doc_id: Document unique identifier
@@ -79,7 +79,7 @@ class PDFRepositoryInterface(ABC):
     @abstractmethod
     def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
         """
-        Find document by checksum.
+        Find active document by checksum.
 
         Args:
             checksum: SHA-256 checksum string
@@ -92,17 +92,30 @@ class PDFRepositoryInterface(ABC):
     @abstractmethod
     def find_all(self) -> List[PDFDocument]:
         """
-        Find all documents.
+        Find all active (non-deleted) documents.
 
         Returns:
-            List of all PDFDocuments
+            List of active PDFDocuments
+        """
+        pass
+
+    @abstractmethod
+    def soft_delete(self, doc_id: str) -> bool:
+        """
+        Soft delete document by ID (marks deleted_at timestamp).
+
+        Args:
+            doc_id: Document unique identifier
+
+        Returns:
+            True if marked as deleted, False if not found
         """
         pass
 
     @abstractmethod
     def delete_by_id(self, doc_id: str) -> bool:
         """
-        Delete document by ID.
+        Permanently delete document by ID.
 
         Args:
             doc_id: Document unique identifier

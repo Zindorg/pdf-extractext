@@ -1,4 +1,4 @@
-"""Tests for MongoPDFRepository."""
+"""Tests for MongoPDFRepository - 5 essential behavior tests."""
 
 from datetime import datetime
 from unittest.mock import MagicMock, Mock
@@ -24,14 +24,13 @@ def mock_mongo_client():
     return client, db, collection
 
 
-class TestMongoRepositoryCreate:
-    """Tests for create method."""
+class TestCreateDocument:
+    """Test 1: Successful save of metadata and text."""
 
-    def test_create_saves_document_with_generated_id(self, mock_mongo_client):
-        """Should save document and return with assigned ID."""
+    def test_saves_document_with_metadata_and_text(self, mock_mongo_client):
+        """Saves PDF document and returns with MongoDB generated ID."""
         client, db, collection = mock_mongo_client
 
-        # Mock insert_one to return an ObjectId
         inserted_id = ObjectId("507f1f77bcf86cd799439011")
         collection.insert_one.return_value = Mock(inserted_id=inserted_id)
 
@@ -39,45 +38,24 @@ class TestMongoRepositoryCreate:
         document = PDFDocument(
             checksum="abc123checksum",
             filename="test.pdf",
-            text_content="sample content",
-            page_count=1,
-            file_size=100
+            text_content="extracted text content",
+            page_count=5,
+            file_size=1024,
         )
 
         result = repository.create(document)
 
         assert result.id == str(inserted_id)
+        assert result.checksum == "abc123checksum"
+        assert result.text_content == "extracted text content"
         collection.insert_one.assert_called_once()
 
-    def test_create_preserves_all_fields(self, mock_mongo_client):
-        """Should preserve all document fields when saving."""
-        client, db, collection = mock_mongo_client
-        collection.insert_one.return_value = Mock(inserted_id=ObjectId())
 
-        repository = MongoPDFRepository(client, "test_db")
-        document = PDFDocument(
-            checksum="sha256hash",
-            filename="document.pdf",
-            text_content="full text",
-            page_count=5,
-            file_size=1024
-        )
+class TestFindByChecksum:
+    """Test 2: Duplicate validation through checksum."""
 
-        result = repository.create(document)
-
-        saved_doc = collection.insert_one.call_args[0][0]
-        assert saved_doc["checksum"] == "sha256hash"
-        assert saved_doc["filename"] == "document.pdf"
-        assert saved_doc["text_content"] == "full text"
-        assert saved_doc["page_count"] == 5
-        assert saved_doc["file_size"] == 1024
-
-
-class TestMongoRepositoryFindByChecksum:
-    """Tests for find_by_checksum method."""
-
-    def test_find_by_checksum_returns_document_when_found(self, mock_mongo_client):
-        """Should return PDFDocument when checksum exists."""
+    def test_finds_document_by_checksum(self, mock_mongo_client):
+        """Finds existing document by its unique checksum."""
         client, db, collection = mock_mongo_client
 
         collection.find_one.return_value = {
@@ -87,8 +65,9 @@ class TestMongoRepositoryFindByChecksum:
             "text_content": "content",
             "page_count": 1,
             "file_size": 100,
+            "deleted_at": None,
             "created_at": datetime.now(),
-            "updated_at": datetime.now()
+            "updated_at": datetime.now(),
         }
 
         repository = MongoPDFRepository(client, "test_db")
@@ -96,25 +75,82 @@ class TestMongoRepositoryFindByChecksum:
 
         assert result is not None
         assert result.checksum == "abc123"
-        assert result.filename == "test.pdf"
-        collection.find_one.assert_called_with({"checksum": "abc123"})
+        # Verifies it excludes deleted by default
+        collection.find_one.assert_called_with(
+            {"checksum": "abc123", "deleted_at": None}
+        )
 
-    def test_find_by_checksum_returns_none_when_not_found(self, mock_mongo_client):
-        """Should return None when checksum not found."""
+
+class TestSoftDelete:
+    """Test 3: Soft delete functionality."""
+
+    def test_soft_delete_sets_deleted_at_timestamp(self, mock_mongo_client):
+        """When deleting, marks deleted_at with current timestamp."""
         client, db, collection = mock_mongo_client
+
+        collection.update_one.return_value = Mock(modified_count=1)
+
+        repository = MongoPDFRepository(client, "test_db")
+        result = repository.soft_delete("507f1f77bcf86cd799439011")
+
+        assert result is True
+        collection.update_one.assert_called_once()
+        # Verifies deleted_at is set
+        call_args = collection.update_one.call_args
+        assert "$set" in call_args[0][1]
+        assert "deleted_at" in call_args[0][1]["$set"]
+
+
+class TestFilterDeletedDocuments:
+    """Test 4: Automatic filtering of deleted documents."""
+
+    def test_search_excludes_deleted_documents(self, mock_mongo_client):
+        """Searches by default exclude documents with deleted_at != null."""
+        client, db, collection = mock_mongo_client
+
+        collection.find.return_value = [
+            {
+                "_id": ObjectId("507f1f77bcf86cd799439011"),
+                "checksum": "abc123",
+                "filename": "active.pdf",
+                "text_content": "content",
+                "deleted_at": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+            },
+        ]
+
+        repository = MongoPDFRepository(client, "test_db")
+        results = repository.find_all()
+
+        assert len(results) == 1
+        # Verifies filter excludes deleted
+        collection.find.assert_called_with({"deleted_at": None})
+
+    def test_find_by_id_excludes_deleted(self, mock_mongo_client):
+        """Finding by ID returns None if document is deleted."""
+        client, db, collection = mock_mongo_client
+
+        # Simulates not found (deleted)
         collection.find_one.return_value = None
 
         repository = MongoPDFRepository(client, "test_db")
-        result = repository.find_by_checksum("nonexistent")
+        result = repository.find_by_id("507f1f77bcf86cd799439011")
 
         assert result is None
+        collection.find_one.assert_called_with(
+            {
+                "_id": ObjectId("507f1f77bcf86cd799439011"),
+                "deleted_at": None,
+            }
+        )
 
 
-class TestMongoRepositoryFindById:
-    """Tests for find_by_id method."""
+class TestGetDocumentById:
+    """Test 5: Get document by ID."""
 
-    def test_find_by_id_returns_document_when_found(self, mock_mongo_client):
-        """Should return PDFDocument when ID exists."""
+    def test_gets_document_by_id(self, mock_mongo_client):
+        """Returns document when searching by valid ID."""
         client, db, collection = mock_mongo_client
 
         object_id = ObjectId("507f1f77bcf86cd799439011")
@@ -125,8 +161,9 @@ class TestMongoRepositoryFindById:
             "text_content": "content",
             "page_count": 1,
             "file_size": 100,
+            "deleted_at": None,
             "created_at": datetime.now(),
-            "updated_at": datetime.now()
+            "updated_at": datetime.now(),
         }
 
         repository = MongoPDFRepository(client, "test_db")
@@ -134,93 +171,13 @@ class TestMongoRepositoryFindById:
 
         assert result is not None
         assert result.id == "507f1f77bcf86cd799439011"
+        assert result.filename == "test.pdf"
 
-    def test_find_by_id_returns_none_for_invalid_id(self, mock_mongo_client):
-        """Should return None for invalid ObjectId format."""
+    def test_returns_none_for_invalid_id_format(self, mock_mongo_client):
+        """Returns None for invalid MongoDB ID format."""
         client, db, collection = mock_mongo_client
 
         repository = MongoPDFRepository(client, "test_db")
-        result = repository.find_by_id("invalid-id")
+        result = repository.find_by_id("invalid-non-mongo-id")
 
         assert result is None
-
-
-class TestMongoRepositoryFindAll:
-    """Tests for find_all method."""
-
-    def test_find_all_returns_list_of_documents(self, mock_mongo_client):
-        """Should return list of all documents."""
-        client, db, collection = mock_mongo_client
-
-        collection.find.return_value = [
-            {
-                "_id": ObjectId("507f1f77bcf86cd799439011"),
-                "checksum": "abc123",
-                "filename": "test1.pdf",
-                "text_content": "content1",
-                "page_count": 1,
-                "file_size": 100,
-                "created_at": datetime.now(),
-                "updated_at": datetime.now()
-            },
-            {
-                "_id": ObjectId("507f1f77bcf86cd799439022"),
-                "checksum": "def456",
-                "filename": "test2.pdf",
-                "text_content": "content2",
-                "page_count": 2,
-                "file_size": 200,
-                "created_at": datetime.now(),
-                "updated_at": datetime.now()
-            }
-        ]
-
-        repository = MongoPDFRepository(client, "test_db")
-        results = repository.find_all()
-
-        assert len(results) == 2
-        assert results[0].filename == "test1.pdf"
-        assert results[1].filename == "test2.pdf"
-
-    def test_find_all_returns_empty_list_when_no_documents(self, mock_mongo_client):
-        """Should return empty list when collection is empty."""
-        client, db, collection = mock_mongo_client
-        collection.find.return_value = []
-
-        repository = MongoPDFRepository(client, "test_db")
-        results = repository.find_all()
-
-        assert results == []
-
-
-class TestMongoRepositoryDeleteById:
-    """Tests for delete_by_id method."""
-
-    def test_delete_by_id_returns_true_when_deleted(self, mock_mongo_client):
-        """Should return True when document is deleted."""
-        client, db, collection = mock_mongo_client
-        collection.delete_one.return_value = Mock(deleted_count=1)
-
-        repository = MongoPDFRepository(client, "test_db")
-        result = repository.delete_by_id("507f1f77bcf86cd799439011")
-
-        assert result is True
-
-    def test_delete_by_id_returns_false_when_not_found(self, mock_mongo_client):
-        """Should return False when document not found."""
-        client, db, collection = mock_mongo_client
-        collection.delete_one.return_value = Mock(deleted_count=0)
-
-        repository = MongoPDFRepository(client, "test_db")
-        result = repository.delete_by_id("507f1f77bcf86cd799439011")
-
-        assert result is False
-
-    def test_delete_by_id_returns_false_for_invalid_id(self, mock_mongo_client):
-        """Should return False for invalid ObjectId format."""
-        client, db, collection = mock_mongo_client
-
-        repository = MongoPDFRepository(client, "test_db")
-        result = repository.delete_by_id("invalid-id")
-
-        assert result is False

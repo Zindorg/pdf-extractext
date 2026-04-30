@@ -15,29 +15,29 @@ authors = [
 # Solo incluimos paquetes necesarios para la ejecución en producción
 dependencies = [
     # Framework web y servidor ASGI
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.34.0",
-    "python-multipart>=0.0.20",
-    "pypdf>=5.0.0",
-    "pydantic>=2.10.0",
-    "pydantic-settings>=2.8.0",
-    "pymongo>=4.6.0",
-    "python-dotenv>=1.0.0",
+    "fastapi>=0.136.1",
+    "uvicorn[standard]>=0.46.0",
+    "python-multipart>=0.0.27",
+    "pypdf>=6.10.2",
+    "pydantic>=2.13.3",
+    "pydantic-settings>=2.14.0",
+    "pymongo>=4.17.0",
+    "python-dotenv>=1.2.2",
 ]
 
 [project.optional-dependencies]
 # Tests - Requeridas para ejecutar el suite de tests
 test = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "pytest-cov>=4.1.0",
-    "httpx>=0.27.0",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "httpx>=0.28.1",
 ]
 
 # Desarrollo - Herramientas adicionales para desarrolladores
 dev = [
     "pdf-extractext[test]",
-    "reportlab>=4.0.0",
+    "reportlab>=4.5.0",
 ]
 
 # Configuración de pytest

@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
-from repositories.repository_factory import RepositoryFactory
-from services.pdf_service import PDFService
+from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
+from app.repositories.repository_factory import RepositoryFactory
+from app.services.pdf_service import PDFService
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def mock_repository():
 @pytest.fixture
 def mock_repository_with_duplicate(mock_repository):
     """Mock repository that simulates duplicate detection."""
-    from models.pdf_document import PDFDocument
+    from app.models.pdf_document import PDFDocument
 
     existing_doc = PDFDocument(
         id="507f1f77bcf86cd799439011",
@@ -68,7 +68,7 @@ def valid_pdf_content():
 @pytest.fixture
 def sample_pdf_document():
     """Provide a sample PDFDocument for testing."""
-    from models.pdf_document import PDFDocument
+    from app.models.pdf_document import PDFDocument
 
     return PDFDocument(
         id="507f1f77bcf86cd799439011",

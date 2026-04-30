@@ -16,9 +16,9 @@ pytestmark = pytest.mark.skipif(
 )
 
 # Import after skip check
-from models.pdf_document import PDFDocument
-from repositories.mongo_pdf_repository import MongoPDFRepository
-from core.exceptions import DuplicateDocumentException, RepositoryException
+from app.models.pdf_document import PDFDocument
+from app.repositories.mongo_pdf_repository import MongoPDFRepository
+from app.exceptions import DuplicateDocumentException, RepositoryException
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +27,7 @@ def mongo_repository():
     
     Nota: Requiere MongoDB corriendo en localhost:27017
     """
-    from infrastructure.database_connection import get_database
+    from app.infrastructure.database_connection import get_database
     
     try:
         db = get_database()

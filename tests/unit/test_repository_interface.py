@@ -3,7 +3,7 @@
 import pytest
 from typing import get_type_hints
 
-from repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
+from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
 
 
 class TestRepositoryInterfaceMethods:

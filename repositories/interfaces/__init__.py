@@ -1,1 +1,0 @@
-"""Repository Interfaces - Abstractions (DIP)."""

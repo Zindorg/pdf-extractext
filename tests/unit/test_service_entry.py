@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from core.exceptions import InvalidFileException
-from services.pdf_service import _validate_filename, _validate_content
+from app.exceptions import InvalidFileException
+from app.services.pdf_service import _validate_filename, _validate_content
 
 
 class TestFilenameValidation:

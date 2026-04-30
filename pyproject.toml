@@ -58,7 +58,7 @@ addopts = [
 # Configuración de setuptools para encontrar paquetes
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["api*", "core*", "models*", "services*", "repositories*", "infrastructure*"]
+include = ["app*"]
 exclude = ["tests*", ".venv*", "__pycache__*"]
 
 [tool.setuptools]

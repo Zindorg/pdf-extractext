@@ -1,1 +1,0 @@
-"""Service Interfaces - Abstractions (DIP)."""

@@ -4,10 +4,10 @@ import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-from repositories.file_pdf_repository import FilePDFRepository
-from services.pdf_service import PDFService
-from infrastructure import pdf_extractor
-from core.exceptions import PDFExtractionException, InvalidFileException
+from app.repositories.file_pdf_repository import FilePDFRepository
+from app.services.pdf_service import PDFService
+from app.infrastructure import pdf_extractor
+from app.exceptions import PDFExtractionException, InvalidFileException
 
 
 class TestFileNotFound:

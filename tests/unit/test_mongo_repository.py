@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from bson import ObjectId
 
-from models.pdf_document import PDFDocument
-from repositories.mongo_pdf_repository import MongoPDFRepository
+from app.models.pdf_document import PDFDocument
+from app.repositories.mongo_pdf_repository import MongoPDFRepository
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ class TestCreateDocument:
     def test_raises_duplicate_exception_on_checksum_collision(self, mock_database):
         """Raises DuplicateDocumentException when checksum already exists."""
         from pymongo.errors import DuplicateKeyError
-        from core.exceptions import DuplicateDocumentException
+        from app.exceptions import DuplicateDocumentException
 
         db, collection = mock_database
         collection.insert_one.side_effect = DuplicateKeyError("duplicate key")

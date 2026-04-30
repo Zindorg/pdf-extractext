@@ -7,14 +7,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from core.exceptions import (
+from app.exceptions import (
     DuplicateDocumentException,
     InvalidFileException,
     PDFExtractionException,
     PDFNotFoundException,
 )
-from models.pdf_document import PDFDocument
-from services.pdf_service import PDFService, _sanitize_filename
+from app.models.pdf_document import PDFDocument
+from app.services.pdf_service import PDFService, _sanitize_filename
 
 
 @pytest.fixture

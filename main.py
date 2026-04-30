@@ -3,11 +3,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import pdf_routes
-from api.routes.pdf_routes import set_pdf_repository
-from core.config import settings
-from infrastructure.database_setup import setup_database
-from repositories.repository_factory import RepositoryFactory
+from app.routes import pdf_routes
+from app.routes.pdf_routes import set_pdf_repository
+from app.config.settings import settings
+from app.infrastructure.database_setup import setup_database
+from app.repositories.repository_factory import RepositoryFactory
 
 
 def create_application() -> FastAPI:

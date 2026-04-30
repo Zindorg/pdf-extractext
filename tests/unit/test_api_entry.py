@@ -6,9 +6,9 @@ from fastapi import FastAPI
 from unittest.mock import AsyncMock, MagicMock
 from pathlib import Path
 
-from api.routes.pdf_routes import router, get_pdf_service
-from core.exceptions import InvalidFileException, PDFExtractionException
-from models.pdf_document import PDFDocument
+from app.routes.pdf_routes import router, get_pdf_service
+from app.exceptions import InvalidFileException, PDFExtractionException
+from app.models.pdf_document import PDFDocument
 
 
 def create_test_app(mock_service=None):

@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from models.pdf_document import PDFDocument
+from app.models.pdf_document import PDFDocument
 
 
 class TestPDFDocumentCreation:

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from infrastructure import pdf_extractor
+from app.infrastructure import pdf_extractor
 
 
 def get_fixture_bytes(filename: str) -> bytes:

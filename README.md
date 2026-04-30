@@ -15,6 +15,7 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 - [Características](#-características)
 - [Requisitos Previos](#-requisitos-previos)
+- [Dependencias](#-dependencias)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [API Endpoints](#-api-endpoints)
 - [Principios Aplicados](#-principios-aplicados)
@@ -35,6 +36,38 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 -  **Manejo de errores** robusto con excepciones personalizadas
 
 ---
+
+## Dependencias
+
+Este proyecto utiliza **[uv](https://docs.astral.sh/uv/)** como gestor de paquetes y requiere **Python >= 3.13**.
+
+### Producción
+
+| Dependencia | Versión | Uso |
+|-------------|---------|-----|
+| `fastapi` | >=0.136.1 | Framework web para construir la API REST |
+| `uvicorn[standard]` | >=0.46.0 | Servidor ASGI para ejecutar la aplicación |
+| `python-multipart` | >=0.0.27 | Parseo de formularios multipart (subida de archivos) |
+| `pypdf` | >=6.10.2 | Extracción de texto de archivos PDF |
+| `pydantic` | >=2.13.3 | Validación de datos y serialización |
+| `pydantic-settings` | >=2.14.0 | Gestión de configuración mediante variables de entorno |
+| `pymongo` | >=4.17.0 | Cliente y driver para MongoDB |
+| `python-dotenv` | >=1.2.2 | Carga de variables de entorno desde archivos `.env` |
+
+### Testing (opcional)
+
+| Dependencia | Versión | Uso |
+|-------------|---------|-----|
+| `pytest` | >=9.0.3 | Framework de testing |
+| `pytest-asyncio` | >=1.3.0 | Soporte para tests asíncronos |
+| `pytest-cov` | >=7.1.0 | Medición de cobertura de código |
+| `httpx` | >=0.28.1 | Cliente HTTP para tests de integración |
+
+### Desarrollo (opcional)
+
+| Dependencia | Versión | Uso |
+|-------------|---------|-----|
+| `reportlab` | >=4.5.0 | Generación y manipulación de archivos PDF |
 
 ---
 

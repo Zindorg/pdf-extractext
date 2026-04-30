@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 from app.repositories.file_pdf_repository import FilePDFRepository
 from app.services.pdf_service import PDFService
 from app.infrastructure import pdf_extractor
-from app.exceptions import PDFExtractionException, InvalidFileException
+from app.exceptions import InvalidFileException
 
 
 class TestFileNotFound:
@@ -23,10 +23,10 @@ class TestFileNotFound:
     @pytest.fixture
     def repository_with_temp_dir(self, temp_upload_dir, monkeypatch):
         """Create FilePDFRepository with temporary upload directory."""
-        from core.config import Settings
+        from app.config import Settings
 
         mock_settings = Settings(upload_dir=str(temp_upload_dir))
-        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("app.repositories.file_pdf_repository.settings", mock_settings)
 
         return FilePDFRepository()
 
@@ -106,13 +106,13 @@ class TestFileSystemEdgeCases:
         self, tmp_path, monkeypatch
     ):
         """Repository handles filenames with special characters."""
-        from core.config import Settings
+        from app.config import Settings
 
         upload_dir = tmp_path / "uploads"
         upload_dir.mkdir()
 
         mock_settings = Settings(upload_dir=str(upload_dir))
-        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("app.repositories.file_pdf_repository.settings", mock_settings)
 
         repository = FilePDFRepository()
 
@@ -137,13 +137,13 @@ class TestFileSystemEdgeCases:
         self, tmp_path, monkeypatch
     ):
         """Repository creates unique paths for files with same name."""
-        from core.config import Settings
+        from app.config import Settings
 
         upload_dir = tmp_path / "uploads"
         upload_dir.mkdir()
 
         mock_settings = Settings(upload_dir=str(upload_dir))
-        monkeypatch.setattr("repositories.file_pdf_repository.settings", mock_settings)
+        monkeypatch.setattr("app.repositories.file_pdf_repository.settings", mock_settings)
 
         repository = FilePDFRepository()
         filename = "duplicate.pdf"

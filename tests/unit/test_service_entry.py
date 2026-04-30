@@ -86,7 +86,7 @@ class TestPDFServiceValidation:
         self, pdf_service, valid_pdf_content, mock_repository
     ):
         """Should accept valid PDF file."""
-        from models.pdf_document import PDFDocument
+        from app.models.pdf_document import PDFDocument
 
         def mock_create(document):
             document.id = "abc123"

@@ -31,7 +31,7 @@ class TestRepositoryInterfaceMethods:
 
     def test_create_accepts_pdf_document(self):
         """Should accept PDFDocument in create."""
-        from models.pdf_document import PDFDocument
+        from app.models.pdf_document import PDFDocument
         import inspect
 
         sig = inspect.signature(PDFRepositoryInterface.create)

@@ -56,7 +56,7 @@ class TestUploadEndpoint:
 
     def test_rejects_file_too_large(self):
         """Should reject files larger than max size."""
-        from core.config import settings
+        from app.config.settings import settings
 
         mock_service = MagicMock()
         app = create_test_app(mock_service)

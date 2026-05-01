@@ -11,7 +11,7 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${ROOT_PASSWORD}
     command: --wiredTigerCacheSizeGB 0.5
     volumes:
-      - ./data:/data/db
+      - ${MONGO_DATA_PATH}:/data/db
 
 networks:
   mired:

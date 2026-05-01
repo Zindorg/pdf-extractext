@@ -13,8 +13,9 @@ class Settings(BaseSettings):
     root_username: str
     root_password: str
     # MongoDB Configuration (user provides these)
-    mongodb_uri: str = "mongodb://localhost:27017"
+    mongodb_uri: str = "mongodb://root:qwerty1234@localhost:27017?authSource=admin"
     mongodb_database: str = "pdf_extractext"
+    mongo_data_path: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

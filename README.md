@@ -49,25 +49,25 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 - Clonar y acceder a repositorio
 
-  **git clone https://github.com/Zindorg/pdf-extractext**
-  **cd pdf-extractext**
+  - **git clone https://github.com/Zindorg/pdf-extractext**
+  - **cd pdf-extractext**
 
 - Descargar dependencias
 
-  **uv sync**
-  **uv sync --extra dev**
+  - **uv sync**
+  - **uv sync --extra dev**
 
 - (Opcional) Configurar permisos en docker
 
-  **sudo usermod -aG docker $USER**
-  **newgrp docker**
+  - **sudo usermod -aG docker $USER**
+  - **newgrp docker**
 
 - Preparar Base de Datos MongoDB
 
-  **cp .env.example .env**
-  **mkdir -p ~/microservicios/mongodb/data**
-  **docker network create mired || true**
-  **docker compose up -d**
+  - **cp .env.example .env**
+  - **mkdir -p ~/microservicios/mongodb/data**
+  - **docker network create mired || true**
+  - **docker compose up -d**
 
 - Nota para usuarios de Windows
 
@@ -77,17 +77,15 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 - Iniciar aplicación
 
-  **uv run python main.py**
+  - **uv run python main.py**
 
 - Extracción de texto
 
-  **curl -X POST "http://localhost:8000/PDF/extract" -F "file=@ruta-al-archivo.pdf"**
+  - **curl -X POST "http://localhost:8000/PDF/extract" -F "file=@ruta-al-archivo.pdf"**
 
 - URL del endpoint (Buscar endpoint POST /PDF/extract)
 
-  **http://localhost:8000/docs**
-
-
+  - **http://localhost:8000/docs**
 
 ---
 

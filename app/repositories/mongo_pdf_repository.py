@@ -37,7 +37,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
         Args:
             database: MongoDB database instance. If None, uses singleton.
         """
-        self._db: Database = database or get_database()
+        self._db: Database = database if database is not None else get_database()
         self._collection: Collection = self._db["pdf_documents"]
 
     def _to_document(self, pdf_doc: PDFDocument) -> dict:

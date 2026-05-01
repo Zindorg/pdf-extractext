@@ -17,7 +17,7 @@ def create_indexes(db: Database = None) -> None:
         >>> from infrastructure.database_setup import create_indexes
         >>> create_indexes()  # Crea índices en la BD por defecto
     """
-    database = db or get_database()
+    database = db if db is not None else get_database()
     collection: Collection = database["pdf_documents"]
 
     # Unique index on checksum for duplicate detection

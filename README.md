@@ -37,6 +37,60 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 ---
 
+## Requisitos previos
+
+- **Python 3.13**
+- **UV**
+- **Docker Engine/Docker Desktop 29.4.1**
+
+---
+
+## Preparación
+
+- Clonar y acceder a repositorio
+
+  **git clone https://github.com/Zindorg/pdf-extractext**
+  **cd pdf-extractext**
+
+- Descargar dependencias
+
+  **uv sync**
+  **uv sync --extra dev**
+
+- (Opcional) Configurar permisos en docker
+
+  **sudo usermod -aG docker $USER**
+  **newgrp docker**
+
+- Preparar Base de Datos MongoDB
+
+  **cp .env.example .env**
+  **mkdir -p ~/microservicios/mongodb/data**
+  **docker network create mired || true**
+  **docker compose up -d**
+
+- Nota para usuarios de Windows
+
+  *En Windows se pueden usar los mismos comandos en WSL o adaptar rutas a C:\data\mongodb*
+
+## Ejecución
+
+- Iniciar aplicación
+
+  **uv run python main.py**
+
+- Extracción de texto
+
+  **curl -X POST "http://localhost:8000/PDF/extract" -F "file=@ruta-al-archivo.pdf"**
+
+- URL del endpoint (Buscar endpoint POST /PDF/extract)
+
+  **http://localhost:8000/docs**
+
+
+
+---
+
 ## Dependencias
 
 Este proyecto utiliza **[uv](https://docs.astral.sh/uv/)** como gestor de paquetes y requiere **Python >= 3.13**.

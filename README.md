@@ -81,9 +81,9 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 - Extracción de texto
 
-  - **curl -X POST "http://localhost:8000/PDF/extract" -F "file=@ruta-al-archivo.pdf"**
+  - **curl -X POST "http://localhost:8000/pdf/upload" -F "file=@ruta-al-archivo.pdf"**
 
-- URL del endpoint (Buscar endpoint POST /PDF/extract)
+- URL del endpoint (Buscar endpoint POST /pdf/upload)
 
   - **http://localhost:8000/docs**
 

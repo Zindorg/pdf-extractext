@@ -10,15 +10,16 @@ def extract_text(file_content: bytes) -> Tuple[str, int]:
     """
     Extract text from PDF.
 
-    Args:
-        file_content: Binary PDF content
-
-    Returns:
-        Tuple of (extracted text, page count)
     """
     reader = PdfReader(BytesIO(file_content))
     text_parts = [page.extract_text() or "" for page in reader.pages]
-    return "\n".join(text_parts), len(reader.pages)
+    combined = "\n".join(text_parts).strip()
+
+    if not combined:
+        return "", 0
+
+    return combined, len(reader.pages)
+
 
 
 def extract_text_from_page_range(

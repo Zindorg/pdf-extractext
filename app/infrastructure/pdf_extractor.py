@@ -7,10 +7,7 @@ from pypdf import PdfReader
 
 
 def extract_text(file_content: bytes) -> Tuple[str, int]:
-    """
-    Extract text from PDF.
-
-    """
+    """Extract text from PDF. """
     reader = PdfReader(BytesIO(file_content))
     text_parts = [page.extract_text() or "" for page in reader.pages]
     combined = "\n".join(text_parts).strip()
@@ -25,17 +22,7 @@ def extract_text(file_content: bytes) -> Tuple[str, int]:
 def extract_text_from_page_range(
     file_content: bytes, start_page: int, end_page: int
 ) -> Tuple[str, int]:
-    """
-    Extract text from a page range.
-
-    Args:
-        file_content: Binary PDF content
-        start_page: Starting page (1-indexed)
-        end_page: Ending page (0 = all pages)
-
-    Returns:
-        Tuple of (extracted text, pages extracted)
-    """
+    """Extract text from a page range."""
     reader = PdfReader(BytesIO(file_content))
     total_pages = len(reader.pages)
 

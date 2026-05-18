@@ -8,15 +8,7 @@ from app.infrastructure.database_connection import get_database
 
 
 def create_indexes(db: Database = None) -> None:
-    """Create all required indexes for the application.
-
-    Args:
-        db: MongoDB database instance. If None, uses singleton.
-
-    Example:
-        >>> from infrastructure.database_setup import create_indexes
-        >>> create_indexes()  # Crea índices en la BD por defecto
-    """
+    """Create all required indexes for the application."""
     database = db if db is not None else get_database()
     collection: Collection = database["pdf_documents"]
 
@@ -41,30 +33,12 @@ def create_indexes(db: Database = None) -> None:
 
 
 def setup_database() -> Database:
-    """Initialize database with proper configuration.
-
-    Returns:
-        Configured database instance from singleton.
-
-    Example:
-        >>> from infrastructure.database_setup import setup_database
-        >>> db = setup_database()
-        >>> # Database ready with indexes
-    """
+    """Initialize database with proper configuration."""
     db = get_database()
     create_indexes(db)
     return db
 
 
 def get_collection() -> Collection:
-    """Get the pdf_documents collection from singleton connection.
-
-    Returns:
-        Collection instance for pdf_documents.
-
-    Example:
-        >>> from infrastructure.database_setup import get_collection
-        >>> collection = get_collection()
-        >>> collection.insert_one({"checksum": "abc123"})
-    """
+    """Get the pdf_documents collection from singleton connection."""
     return get_database()["pdf_documents"]

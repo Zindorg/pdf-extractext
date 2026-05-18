@@ -15,40 +15,15 @@ from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryIn
 
 
 class MongoPDFRepository(PDFRepositoryInterface):
-    """MongoDB implementation of PDF repository.
-
-    Implementa todas las operaciones CRUD para documentos PDF,
-    con manejo robusto de errores y validación de duplicados.
-
-    Attributes:
-        _db: Instancia de base de datos MongoDB.
-        _collection: Colección de documentos PDF.
-
-    Example:
-        >>> from repositories.mongo_pdf_repository import MongoPDFRepository
-        >>> from infrastructure.database_connection import get_database
-        >>> repo = MongoPDFRepository(database=get_database())
-        >>> doc = repo.find_by_checksum("abc123")
-    """
+    """MongoDB implementation of PDF repository."""
 
     def __init__(self, database: Database = None):
-        """Initialize repository with database connection.
-
-        Args:
-            database: MongoDB database instance. If None, uses singleton.
-        """
+        """Initialize repository with database connection."""
         self._db: Database = database if database is not None else get_database()
         self._collection: Collection = self._db["pdf_documents"]
 
     def _to_document(self, pdf_doc: PDFDocument) -> dict:
-        """Convert PDFDocument to MongoDB document.
-
-        Args:
-            pdf_doc: Domain model to convert.
-
-        Returns:
-            Dictionary representation for MongoDB.
-        """
+        """Convert PDFDocument to MongoDB document."""
         return {
             "_id": ObjectId(pdf_doc.id) if pdf_doc.id else None,
             "checksum": pdf_doc.checksum,
@@ -63,14 +38,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
         }
 
     def _from_document(self, doc: dict) -> PDFDocument:
-        """Convert MongoDB document to PDFDocument.
-
-        Args:
-            doc: MongoDB document dictionary.
-
-        Returns:
-            Domain model instance.
-        """
+        """Convert MongoDB document to PDFDocument."""
         return PDFDocument(
             id=str(doc["_id"]),
             checksum=doc["checksum"],
@@ -85,30 +53,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
         )
 
     def create(self, document: PDFDocument) -> PDFDocument:
-        """Create a new PDF document in MongoDB.
-
-        Persiste un nuevo documento PDF en la base de datos.
-        Si el documento ya existe (mismo checksum), lanza excepción.
-
-        Args:
-            document: PDFDocument to persist.
-
-        Returns:
-            PDFDocument with assigned ID.
-
-        Raises:
-            DuplicateDocumentException: If checksum already exists.
-            RepositoryException: If database operation fails.
-
-        Example:
-            >>> doc = PDFDocument(
-            ...     checksum="abc123",
-            ...     filename="test.pdf",
-            ...     text_content="content"
-            ... )
-            >>> saved = repo.create(doc)
-            >>> print(saved.id)  # MongoDB ObjectId as string
-        """
+        """Create a new PDF document in MongoDB."""
         doc_dict = self._to_document(document)
         if doc_dict["_id"] is None:
             del doc_dict["_id"]
@@ -127,22 +72,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             raise RepositoryException(f"Failed to create document: {e}") from e
 
     def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
-        """Find active document by MongoDB ObjectId.
-
-        Busca un documento por su ID, excluyendo los marcados
-        como eliminados (soft delete).
-
-        Args:
-            doc_id: Document unique identifier (MongoDB ObjectId string).
-
-        Returns:
-            PDFDocument or None if not found or deleted.
-
-        Example:
-            >>> doc = repo.find_by_id("507f1f77bcf86cd799439011")
-            >>> if doc:
-            ...     print(doc.filename)
-        """
+        """Find active document by MongoDB ObjectId."""
         try:
             object_id = ObjectId(doc_id)
         except Exception:
@@ -157,22 +87,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return None
 
     def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
-        """Find active document by SHA-256 checksum.
-
-        Busca un documento por su hash de contenido, útil para
-        detectar duplicados.
-
-        Args:
-            checksum: SHA-256 checksum string.
-
-        Returns:
-            PDFDocument or None if not found or deleted.
-
-        Example:
-            >>> existing = repo.find_by_checksum("abc123...")
-            >>> if existing:
-            ...     print("Duplicate detected!")
-        """
+        """Find active document by SHA-256 checksum."""
         try:
             doc = self._collection.find_one({"checksum": checksum, "deleted_at": None})
             if doc:
@@ -182,19 +97,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return None
 
     def find_all(self) -> List[PDFDocument]:
-        """Find all active documents.
-
-        Retorna todos los documentos no eliminados, ordenados
-        por fecha de creación descendente.
-
-        Returns:
-            List of active PDFDocuments.
-
-        Example:
-            >>> documents = repo.find_all()
-            >>> for doc in documents:
-            ...     print(f"{doc.filename}: {doc.page_count} pages")
-        """
+        """Find all active documents."""
         try:
             documents = self._collection.find({"deleted_at": None}).sort(
                 "created_at", -1
@@ -204,25 +107,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return []
 
     def update(self, document: PDFDocument) -> Optional[PDFDocument]:
-        """Update an existing PDF document.
-
-        Actualiza un documento existente. Solo se actualizan
-        los campos permitidos (no se puede cambiar checksum).
-
-        Args:
-            document: PDFDocument with updated fields.
-
-        Returns:
-            Updated PDFDocument or None if not found.
-
-        Raises:
-            RepositoryException: If update fails.
-
-        Example:
-            >>> doc = repo.find_by_id("507f1f77bcf86cd799439011")
-            >>> doc.update_text("new content")
-            >>> updated = repo.update(doc)
-        """
+        """Update an existing PDF document."""
         if not document.id:
             return None
 
@@ -252,21 +137,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             raise RepositoryException(f"Failed to update document: {e}") from e
 
     def soft_delete(self, doc_id: str) -> bool:
-        """Soft delete document by ID.
-
-        Marca un documento como eliminado estableciendo
-        el timestamp deleted_at, sin borrarlo físicamente.
-
-        Args:
-            doc_id: Document unique identifier.
-
-        Returns:
-            True if marked as deleted, False if not found.
-
-        Example:
-            >>> if repo.soft_delete("507f1f77bcf86cd799439011"):
-            ...     print("Document archived")
-        """
+        """Soft delete document by ID."""
         try:
             object_id = ObjectId(doc_id)
         except Exception:
@@ -287,21 +158,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return False
 
     def delete_by_id(self, doc_id: str) -> bool:
-        """Permanently delete document by ID.
-
-        Elimina físicamente un documento de la base de datos.
-        Use con precaución - preferir soft_delete.
-
-        Args:
-            doc_id: Document unique identifier.
-
-        Returns:
-            True if deleted, False if not found.
-
-        Example:
-            >>> if repo.delete_by_id("507f1f77bcf86cd799439011"):
-            ...     print("Permanently deleted")
-        """
+        """Permanently delete document by ID."""
         try:
             object_id = ObjectId(doc_id)
         except Exception:
@@ -314,21 +171,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return False
 
     def restore(self, doc_id: str) -> bool:
-        """Restore a soft-deleted document.
-
-        Recupera un documento previamente marcado como eliminado,
-        limpiando el campo deleted_at.
-
-        Args:
-            doc_id: Document unique identifier.
-
-        Returns:
-            True if restored, False if not found.
-
-        Example:
-            >>> if repo.restore("507f1f77bcf86cd799439011"):
-            ...     print("Document recovered")
-        """
+        """Restore a soft-deleted document."""
         try:
             object_id = ObjectId(doc_id)
         except Exception:

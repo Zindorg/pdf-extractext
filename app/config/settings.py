@@ -9,10 +9,9 @@ class Settings(BaseSettings):
     app_name: str = "PDF Extractext"
     debug: bool = False
     upload_dir: str = "./uploads"
-    max_file_size: int = 10 * 1024 * 1024  # 10MB
+    max_file_size: int = 10 * 1024 * 1024
     root_username: str
     root_password: str
-    # MongoDB Configuration (user provides these)
     mongodb_uri: str = "mongodb://root:qwerty1234@localhost:27017?authSource=admin"
     mongodb_database: str = "pdf_extractext"
     mongo_data_path: str

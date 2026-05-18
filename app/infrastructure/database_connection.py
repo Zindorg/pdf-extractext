@@ -10,37 +10,20 @@ from app.exceptions import DatabaseConnectionException
 
 
 class DatabaseConnection:
-    """Singleton database connection manager.
-
-    Esta clase gestiona la conexión a MongoDB como un singleton,
-    asegurando que solo exista una instancia de conexión activa
-    durante toda la vida de la aplicación.
-
-    Example:
-        >>> db = DatabaseConnection().connect()
-        >>> collection = db["pdf_documents"]
-        >>> DatabaseConnection().close()
-    """
+    """Singleton database connection manager."""
 
     _instance: Optional["DatabaseConnection"] = None
     _client: Optional[MongoClient] = None
     _database: Optional[Database] = None
 
     def __new__(cls) -> "DatabaseConnection":
-        """Crear o retornar instancia singleton."""
+        """Create or return singleton instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def connect(self) -> Database:
-        """Get or create database connection.
-
-        Returns:
-            Configured MongoDB database instance.
-
-        Raises:
-            DatabaseConnectionException: If cannot connect to MongoDB.
-        """
+        """Get or create database connection."""
         if self._database is not None:
             return self._database
 
@@ -68,28 +51,21 @@ class DatabaseConnection:
         return self._database is not None and self._client is not None
 
 
-# Global singleton instance for backward compatibility
-_connection = DatabaseConnection()
+# Module-level singleton for direct access
+_connection: DatabaseConnection | None = None
 
 
 def get_database() -> Database:
-    """Get database instance from singleton.
-
-    Returns:
-        Configured MongoDB database instance.
-
-    Example:
-        >>> db = get_database()
-        >>> collection = db["pdf_documents"]
-    """
+    """Get database instance from singleton."""
+    global _connection
+    if _connection is None:
+        _connection = DatabaseConnection()
     return _connection.connect()
 
 
 def close_connection() -> None:
-    """Close database connection.
-
-    Example:
-        >>> close_connection()
-        >>> # Connection is now closed
-    """
-    _connection.close()
+    """Close database connection."""
+    global _connection
+    if _connection is not None:
+        _connection.close()
+        _connection = None

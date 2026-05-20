@@ -1,0 +1,27 @@
+@startuml packages_pdf-extractext
+set namespaceSeparator none
+skinparam packageStyle folder
+left to right direction
+
+' --- DEFINICIÓN DE CARPETAS PRINCIPALES ---
+package "app.routes" as routes
+package "app.use_cases" as usecases
+package "app.services" as services
+package "app.repositories" as repositories
+package "app.infrastructure" as infra
+package "app.models" as models
+
+' --- FLUJO DE DEPENDENCIAS (IMPORTS) ---
+routes --> usecases : importa
+routes --> services : importa
+
+usecases --> services : orquesta
+
+services --> repositories : depende de (interfaces)
+services --> infra : usa (extractor)
+services --> models : utiliza
+
+repositories --> models : persiste/mapea
+repositories --> infra : usa (conexión bd)
+
+@enduml

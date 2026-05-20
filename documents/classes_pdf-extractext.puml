@@ -1,0 +1,83 @@
+@startuml classes_pdf-extractext
+set namespaceSeparator none
+left to right direction
+
+' --- CAPA 1: CASOS DE USO / RUTAS ---
+class "DownloadExtractedText" as app.use_cases.download_text.DownloadExtractedText {
+  execute(doc_id: str) -> str
+  stream_text(text_content: str) -> Generator[bytes, None, None]
+}
+class "ProcessPDFFile" as app.use_cases.process_pdf.ProcessPDFFile {
+  execute(file_content: bytes, filename: str)
+}
+
+' --- CAPA 2: LÓGICA DE NEGOCIO (SERVICIOS) ---
+class "PDFServiceInterface" as app.services.interfaces.pdf_service_interface.PDFServiceInterface {
+  {abstract}delete_by_id(doc_id: str) -> bool
+  {abstract}find_all() -> List[PDFDocument]
+  {abstract}find_by_checksum(checksum: str) -> Optional[PDFDocument]
+  {abstract}find_by_id(doc_id: str) -> Optional[PDFDocument]
+  {abstract}generate_checksum(file_content: bytes) -> str
+  {abstract}get_persisted_document(doc_id: str) -> PDFDocument
+  {abstract}process_pdf(file_content: bytes, filename: str) -> PDFDocument
+}
+class "PDFService" as app.services.pdf_service.PDFService {
+  delete_by_id(doc_id: str) -> bool
+  extract_text(file_content: bytes) -> str
+  find_all() -> List[PDFDocument]
+  find_by_checksum(checksum: str) -> Optional[PDFDocument]
+  find_by_id(doc_id: str) -> Optional[PDFDocument]
+  generate_checksum(file_content: bytes) -> str
+  get_persisted_document(doc_id: str) -> Optional[PDFDocument]
+  process_pdf(file_content: bytes, filename: str) -> PDFDocument
+  restore(doc_id: str) -> bool
+  soft_delete(doc_id: str) -> bool
+  update_document(document: PDFDocument) -> Optional[PDFDocument]
+}
+
+' --- CAPA 3: ACCESO A DATOS (REPOSITORIOS) ---
+class "PDFRepositoryInterface" as app.repositories.interfaces.pdf_repository_interface.PDFRepositoryInterface {
+  {abstract}create(document: PDFDocument) -> PDFDocument
+  {abstract}delete_by_id(doc_id: str) -> bool
+  {abstract}find_all() -> List[PDFDocument]
+  {abstract}find_by_checksum(checksum: str) -> Optional[PDFDocument]
+  {abstract}find_by_id(doc_id: str) -> Optional[PDFDocument]
+  {abstract}restore(doc_id: str) -> bool
+  {abstract}soft_delete(doc_id: str) -> bool
+  {abstract}update(document: PDFDocument) -> Optional[PDFDocument]
+}
+class "MongoPDFRepository" as app.repositories.mongo_pdf_repository.MongoPDFRepository {
+  create(document: PDFDocument) -> PDFDocument
+  delete_by_id(doc_id: str) -> bool
+  find_all() -> List[PDFDocument]
+  find_by_checksum(checksum: str) -> Optional[PDFDocument]
+  find_by_id(doc_id: str) -> Optional[PDFDocument]
+  restore(doc_id: str) -> bool
+  soft_delete(doc_id: str) -> bool
+  update(document: PDFDocument) -> Optional[PDFDocument]
+}
+
+' --- ENTIDAD PRINCIPAL ---
+class "PDFDocument" as app.models.pdf_document.PDFDocument {
+  checksum : str
+  content_type : str
+  created_at : Optional[datetime]
+  deleted_at : Optional[datetime]
+  file_size : int
+  filename : str
+  id : Optional[str]
+  page_count : int
+  text_content : str
+  updated_at : Optional[datetime]
+  update_text(text: str) -> None
+}
+
+' --- RELACIONES ---
+app.repositories.mongo_pdf_repository.MongoPDFRepository --|> app.repositories.interfaces.pdf_repository_interface.PDFRepositoryInterface
+app.services.pdf_service.PDFService --|> app.services.interfaces.pdf_service_interface.PDFServiceInterface
+
+app.services.pdf_service.PDFService --o app.use_cases.download_text.DownloadExtractedText : _pdf_service
+app.services.pdf_service.PDFService --o app.use_cases.process_pdf.ProcessPDFFile : _pdf_service
+
+app.repositories.interfaces.pdf_repository_interface.PDFRepositoryInterface <-- app.services.pdf_service.PDFService : usa
+@enduml

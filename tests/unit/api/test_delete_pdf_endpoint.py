@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from tests.unit.api.utils import _create_test_app
 
+
 class TestDelete:
     """Eliminar PDF existente retorna 204."""
 
@@ -27,3 +28,6 @@ class TestDelete:
         resp = client.delete("/pdfs/nonexistent")
 
         assert resp.status_code == 404
+        body = resp.json()
+        assert body["title"] == "Not Found"
+        assert body["status"] == 404

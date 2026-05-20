@@ -1,4 +1,4 @@
-"""Tests para POST /pdfs/{file_id}/extract."""
+"""Tests para GET /pdfs/{file_id}/text."""
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.exceptions import PDFNotFoundException
 from tests.unit.api.utils import _create_test_app, _make_document
+
 
 class TestExtract:
     """Extraer texto de PDF existente."""
@@ -22,7 +23,7 @@ class TestExtract:
         body = resp.json()
         assert body["text"] == "Extracted text"
         assert body["pages_extracted"] == 5
-    
+
     """Extraer de PDF inexistente retorna 404."""
 
     def test_returns_404(self):
@@ -35,3 +36,6 @@ class TestExtract:
         resp = client.get("/pdfs/missing/text")
 
         assert resp.status_code == 404
+        body = resp.json()
+        assert body["title"] == "Not Found"
+        assert body["status"] == 404

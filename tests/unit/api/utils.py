@@ -2,24 +2,25 @@
 
 from datetime import datetime
 
-from app.models.pdf_document import PDFDocument
-from app.exceptions import PDFNotFoundException
+from fastapi import FastAPI
 
+from app.api.exception_handlers import pdf_exception_handlers
 from app.routes.pdf_routes import get_pdf_service, router
+from app.models.pdf_document import PDFDocument
 
-from fastapi import FastAPI, HTTPException
 
 def _create_test_app(mock_service=None):
     app = FastAPI()
     if mock_service:
         app.dependency_overrides[get_pdf_service] = lambda: mock_service
+
+    # Register RFC 9457 exception handlers
+    for exc_class, handler in pdf_exception_handlers.items():
+        app.add_exception_handler(exc_class, handler)
+
     app.include_router(router)
-
-    @app.exception_handler(PDFNotFoundException)
-    async def pdf_not_found_handler(request, exc):
-        raise HTTPException(status_code=404, detail=str(exc))
-
     return app
+
 
 def _make_document(**overrides):
     """Crea un PDFDocument con valores por defecto."""

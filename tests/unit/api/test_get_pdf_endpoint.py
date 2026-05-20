@@ -1,9 +1,10 @@
 """Tests para GET /pdfs/{doc_id}."""
 
-from unittest.mock import MagicMock 
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 from tests.unit.api.utils import _create_test_app, _make_document
+
 
 class TestGet:
     """Obtener PDF existente retorna detalle completo."""
@@ -20,7 +21,7 @@ class TestGet:
         body = resp.json()
         assert body["text_content"] == "Full document text here"
         assert body["filename"] == "document.pdf"
-    
+
     """Obtener PDF inexistente retorna 404."""
 
     def test_returns_404(self):
@@ -31,3 +32,7 @@ class TestGet:
         resp = client.get("/pdfs/nonexistent-id")
 
         assert resp.status_code == 404
+        body = resp.json()
+        assert body["title"] == "Not Found"
+        assert body["status"] == 404
+        assert "not found" in body["detail"].lower()

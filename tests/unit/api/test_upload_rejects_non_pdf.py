@@ -18,3 +18,6 @@ class TestUploadRejectsNonPdf:
             files={"file": ("image.png", b"png data", "image/png")},
         )
         assert resp.status_code == 422
+        body = resp.json()
+        assert body["title"] == "Unprocessable Entity"
+        assert body["status"] == 422

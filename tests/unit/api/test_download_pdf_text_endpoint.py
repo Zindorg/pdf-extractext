@@ -43,3 +43,6 @@ class TestDownloadText:
         resp = client.get("/pdfs/nonexistent/download")
 
         assert resp.status_code == 404
+        body = resp.json()
+        assert body["title"] == "Not Found"
+        assert body["status"] == 404

@@ -18,3 +18,6 @@ class TestUploadRejectsEmptyFile:
             files={"file": ("empty.pdf", b"", "application/pdf")},
         )
         assert resp.status_code == 422
+        body = resp.json()
+        assert body["title"] == "Unprocessable Entity"
+        assert body["status"] == 422

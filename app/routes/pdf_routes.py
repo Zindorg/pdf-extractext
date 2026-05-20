@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.config.settings import settings
@@ -117,11 +117,11 @@ def get_pdf(
         PDF document with full text content.
 
     Raises:
-        HTTPException: 404 if document not found.
+        PDFNotFoundException: 404 if document not found.
     """
     doc = use_case.execute(doc_id)
     if doc is None:
-        raise HTTPException(status_code=404, detail=f"Document not found: {doc_id}")
+        raise PDFNotFoundException(detail=f"Document not found: {doc_id}")
     return doc
 
 
@@ -139,16 +139,15 @@ async def upload_pdf(
         Upload response with persisted document metadata.
     """
     if file.content_type not in ("application/pdf", "application/octet-stream"):
-        raise HTTPException(
-            status_code=422,
-            detail=f"Invalid file type: {file.content_type}. Expected PDF",
+        raise InvalidFileException(
+            detail=f"Invalid file type: {file.content_type}. Expected PDF"
         )
 
     content = await file.read()
     if len(content) > settings.max_file_size:
-        raise HTTPException(status_code=422, detail="File too large")
+        raise InvalidFileException(detail="File too large")
     if not content:
-        raise HTTPException(status_code=422, detail="File is empty")
+        raise InvalidFileException(detail="File is empty")
 
     checksum = service.generate_checksum(content)
     existing = service.find_by_checksum(checksum)
@@ -234,5 +233,5 @@ def delete_pdf(
     """
     deleted = use_case.execute(doc_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail=f"Document not found: {doc_id}")
+        raise PDFNotFoundException(detail=f"Document not found: {doc_id}")
     return None

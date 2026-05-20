@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.exception_handlers import pdf_exception_handlers
 from app.routes import pdf_routes
 from app.routes.pdf_routes import set_pdf_repository
 from app.config.settings import settings
@@ -45,6 +46,10 @@ def create_application() -> FastAPI:
     )
 
     application.include_router(pdf_routes.router, prefix="/api/v1")
+
+    # Register global exception handlers for RFC 9457 problem details
+    for exc_class, handler in pdf_exception_handlers.items():
+        application.add_exception_handler(exc_class, handler)
 
     return application
 

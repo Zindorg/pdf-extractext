@@ -44,7 +44,7 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
 
-    application.include_router(pdf_routes.router)
+    application.include_router(pdf_routes.router, prefix="/api/v1")
 
     return application
 
@@ -54,4 +54,5 @@ app = create_application()
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

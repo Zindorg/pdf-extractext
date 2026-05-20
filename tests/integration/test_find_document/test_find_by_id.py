@@ -1,14 +1,7 @@
 """Integration tests for finding documents by ID."""
 
-import os
-import pytest
 from app.models.pdf_document import PDFDocument
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("SKIP_INTEGRATION_TESTS") == "1",
-    reason="Integration tests disabled"
-)
-
+from tests.integration.test_creation_document.test_create_document import pytestmark
 
 class TestFindById:
     """Test READ by ID operation."""

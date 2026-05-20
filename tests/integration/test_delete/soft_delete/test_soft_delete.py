@@ -1,16 +1,8 @@
 """Integration tests for soft delete operation."""
 
-import os
-import pytest
 from bson import ObjectId
 from app.models.pdf_document import PDFDocument
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("SKIP_INTEGRATION_TESTS") == "1",
-    reason="Integration tests disabled"
-)
-
-
+from tests.integration.test_creation_document.test_create_document import pytestmark
 class TestSoftDelete:
     """Test SOFT DELETE operation."""
 

@@ -12,7 +12,6 @@ pytestmark = pytest.mark.skipif(
     reason="Integration tests disabled"
 )
 
-
 class TestCreateDocument:
     """Test CREATE operation."""
 
@@ -25,7 +24,6 @@ class TestCreateDocument:
             page_count=5,
             file_size=1024,
         )
-
         result = mongo_repository.create(document)
 
         assert result.id is not None
@@ -60,17 +58,13 @@ class TestCreateDocument:
         """Verify unique constraint on checksum works."""
         checksum = "test_duplicate_collision"
 
-        # Create first document
-        doc1 = PDFDocument(
-            checksum=checksum,
+        doc1 = PDFDocument(checksum=checksum,
             filename="test_first.pdf",
             text_content="First document",
         )
         mongo_repository.create(doc1)
 
-        # Try to create duplicate
-        doc2 = PDFDocument(
-            checksum=checksum,
+        doc2 = PDFDocument(checksum=checksum,
             filename="test_second.pdf",
             text_content="Second document",
         )

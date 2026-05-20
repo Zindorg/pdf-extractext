@@ -2,6 +2,7 @@
 
 import pytest
 from app.infrastructure.database_connection import get_database
+from app.infrastructure.database_setup import create_indexes
 from app.repositories.mongo_pdf_repository import MongoPDFRepository
 
 
@@ -13,6 +14,7 @@ def mongo_repository():
     """
     try:
         db = get_database()
+        create_indexes(db)
         repository = MongoPDFRepository(database=db)
 
         # Clean up any existing test data

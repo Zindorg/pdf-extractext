@@ -4,19 +4,19 @@ from typing import Optional
 
 from app.models.pdf_document import PDFDocument
 from app.schemas.pdf_schemas import PDFDetailResponse
-from app.services.pdf_service import PDFService
+from app.services.pdf_queries import PDFQueries
 
 
 class GetPDF:
     """Retrieve a single PDF document by ID."""
 
-    def __init__(self, pdf_service: PDFService):
-        """Initialize with PDF service.
+    def __init__(self, queries: PDFQueries) -> None:
+        """Initialize with queries service.
 
         Args:
-            pdf_service: Injected PDF service.
+            queries: Injected PDF queries service.
         """
-        self._pdf_service = pdf_service
+        self._queries = queries
 
     def execute(self, doc_id: str) -> Optional[PDFDetailResponse]:
         """Retrieve PDF by ID and map to response schema.
@@ -27,7 +27,7 @@ class GetPDF:
         Returns:
             PDFDetailResponse if found, None otherwise.
         """
-        doc: Optional[PDFDocument] = self._pdf_service.find_by_id(doc_id)
+        doc: Optional[PDFDocument] = self._queries.find_by_id(doc_id)
 
         if doc is None:
             return None

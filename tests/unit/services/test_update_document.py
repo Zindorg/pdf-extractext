@@ -1,10 +1,10 @@
-"""Tests para PDFService.update_document."""
+"""Tests para PDFCommands.update_document."""
 
 from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.models.pdf_document import PDFDocument
-from app.services.pdf_service import PDFService
+from app.services.pdf_commands import PDFCommands
 
 
 class TestUpdateDocument:
@@ -24,8 +24,8 @@ class TestUpdateDocument:
         mock_repo = MagicMock()
         mock_repo.update.return_value = doc
 
-        service = PDFService(repository=mock_repo)
-        result = service.update_document(doc)
+        commands = PDFCommands(repository=mock_repo)
+        result = commands.update_document(doc)
 
         assert result == doc
         assert result.filename == "updated.pdf"
@@ -36,7 +36,7 @@ class TestUpdateDocument:
         mock_repo = MagicMock()
         mock_repo.update.return_value = None
 
-        service = PDFService(repository=mock_repo)
+        commands = PDFCommands(repository=mock_repo)
         doc = PDFDocument(
             id="507f1f77bcf86cd799439011",
             checksum="abc123",
@@ -47,6 +47,6 @@ class TestUpdateDocument:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        result = service.update_document(doc)
+        result = commands.update_document(doc)
 
         assert result is None

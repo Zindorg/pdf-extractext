@@ -1,10 +1,10 @@
-"""Tests para PDFService.restore."""
+"""Tests para PDFCommands.restore."""
 
 from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.models.pdf_document import PDFDocument
-from app.services.pdf_service import PDFService
+from app.services.pdf_commands import PDFCommands
 
 
 class TestRestore:
@@ -26,8 +26,8 @@ class TestRestore:
         mock_repo.find_by_id.return_value = doc
         mock_repo.restore.return_value = True
 
-        service = PDFService(repository=mock_repo)
-        result = service.restore("507f1f77bcf86cd799439011")
+        commands = PDFCommands(repository=mock_repo)
+        result = commands.restore("507f1f77bcf86cd799439011")
 
         assert result is True
 
@@ -47,8 +47,8 @@ class TestRestore:
         mock_repo = MagicMock()
         mock_repo.find_by_id.return_value = doc
 
-        service = PDFService(repository=mock_repo)
-        result = service.restore("507f1f77bcf86cd799439011")
+        commands = PDFCommands(repository=mock_repo)
+        result = commands.restore("507f1f77bcf86cd799439011")
 
         assert result is False
 
@@ -58,7 +58,7 @@ class TestRestore:
         mock_repo = MagicMock()
         mock_repo.find_by_id.return_value = None
 
-        service = PDFService(repository=mock_repo)
-        result = service.restore("507f1f77bcf86cd799439011")
+        commands = PDFCommands(repository=mock_repo)
+        result = commands.restore("507f1f77bcf86cd799439011")
 
         assert result is False

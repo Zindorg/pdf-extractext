@@ -1,7 +1,7 @@
 """Utilidades compartidas para tests de API."""
 
 from datetime import datetime
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
 
@@ -12,26 +12,25 @@ from app.dependencies import (
     get_extract_text_use_case,
     get_get_pdf_use_case,
     get_list_pdfs_use_case,
-    get_pdf_service,
+    get_process_pdf_use_case,
 )
 from app.models.pdf_document import PDFDocument
 from app.routes.pdf_routes import router
 
 
-def _create_test_app(mock_service=None):
+from app.use_cases.delete_pdf import DeletePDF
+from app.use_cases.download_text import DownloadExtractedText
+from app.use_cases.extract_text import ExtractText
+from app.use_cases.get_pdf import GetPDF
+from app.use_cases.list_pdfs import ListPDFs
+from app.use_cases.process_pdf import ProcessPDFFile
+
+
+def _create_test_app(mock_extraction=None, mock_queries=None, mock_commands=None):
     app = FastAPI()
 
-    if mock_service is not None:
-        # Inyectar el servicio mock en el endpoint de upload
-        app.dependency_overrides[get_pdf_service] = lambda: mock_service
-
-        # Generar mocks de los use cases para otros endpoints
-        from app.use_cases.delete_pdf import DeletePDF
-        from app.use_cases.download_text import DownloadExtractedText
-        from app.use_cases.extract_text import ExtractText
-        from app.use_cases.get_pdf import GetPDF
-        from app.use_cases.list_pdfs import ListPDFs
-
+    # Default mock for queries if not provided
+    if mock_queries is None:
         pdf_document = PDFDocument(
             id="507f1f77bcf86cd799439011",
             checksum="abc123checksum",
@@ -39,36 +38,47 @@ def _create_test_app(mock_service=None):
             page_count=5,
             file_size=1024,
             text_content="Extracted text",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
         )
+        mock_queries = MagicMock()
+        mock_queries.find_by_id.return_value = pdf_document
+        mock_queries.find_all.return_value = [pdf_document]
+        mock_queries.get_persisted_document.return_value = pdf_document
+    
+    # Default mock for commands if not provided
+    if mock_commands is None:
+        mock_commands = MagicMock()
+        mock_commands.delete_by_id.return_value = True
 
-        list_uc = MagicMock(spec=ListPDFs)
-        list_uc.execute.return_value = MagicMock(
-            documents=[pdf_document], total=1
-        )
+    # Default mock for extraction if not provided
+    if mock_extraction is None:
+        mock_extraction = MagicMock()
+        mock_extraction.process_pdf = AsyncMock(return_value=PDFDocument(
+            id="507f1f77bcf86cd799439011",
+            checksum="abc123checksum",
+            filename="document.pdf",
+            page_count=5,
+            file_size=1024,
+            text_content="Extracted text",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        ))
 
-        get_uc = MagicMock(spec=GetPDF)
-        get_uc.execute.return_value = pdf_document
+    # Create use cases from mocks
+    list_uc = ListPDFs(mock_queries)
+    get_uc = GetPDF(mock_queries)
+    extract_uc = ExtractText(mock_queries)
+    delete_uc = DeletePDF(mock_commands)
+    download_uc = DownloadExtractedText(mock_queries)
+    process_uc = ProcessPDFFile(mock_extraction, mock_queries)
 
-        extract_uc = MagicMock(spec=ExtractText)
-        extract_uc.execute.return_value = MagicMock(
-            id=pdf_document.id,
-            filename=pdf_document.filename,
-            text=pdf_document.text_content,
-            pages_extracted=pdf_document.page_count,
-            total_pages=pdf_document.page_count,
-        )
-
-        delete_uc = MagicMock(spec=DeletePDF)
-        delete_uc.execute.return_value = True
-
-        download_uc = MagicMock(spec=DownloadExtractedText)
-        download_uc.execute.return_value = pdf_document.text_content
-
-        app.dependency_overrides[get_list_pdfs_use_case] = lambda: list_uc
-        app.dependency_overrides[get_get_pdf_use_case] = lambda: get_uc
-        app.dependency_overrides[get_extract_text_use_case] = lambda: extract_uc
-        app.dependency_overrides[get_delete_pdf_use_case] = lambda: delete_uc
-        app.dependency_overrides[get_download_text_use_case] = lambda: download_uc
+    app.dependency_overrides[get_list_pdfs_use_case] = lambda: list_uc
+    app.dependency_overrides[get_get_pdf_use_case] = lambda: get_uc
+    app.dependency_overrides[get_extract_text_use_case] = lambda: extract_uc
+    app.dependency_overrides[get_delete_pdf_use_case] = lambda: delete_uc
+    app.dependency_overrides[get_download_text_use_case] = lambda: download_uc
+    app.dependency_overrides[get_process_pdf_use_case] = lambda: process_uc
 
     # Register RFC 9457 exception handlers
     for exc_class, handler in pdf_exception_handlers.items():

@@ -1,19 +1,19 @@
 """Use case for extracting text from a persisted PDF document."""
 
 from app.schemas.pdf_schemas import PDFExtractResponse
-from app.services.pdf_service import PDFService
+from app.services.pdf_queries import PDFQueries
 
 
 class ExtractText:
     """Retrieve extracted text from a persisted PDF document."""
 
-    def __init__(self, pdf_service: PDFService):
-        """Initialize with PDF service.
+    def __init__(self, queries: PDFQueries):
+        """Initialize with queries service.
 
         Args:
-            pdf_service: Injected PDF service.
+            queries: Injected PDF queries service.
         """
-        self._pdf_service = pdf_service
+        self._queries = queries
 
     def execute(self, file_id: str) -> PDFExtractResponse:
         """Retrieve extracted text from a persisted document.
@@ -24,7 +24,7 @@ class ExtractText:
         Returns:
             PDFExtractResponse with extracted text.
         """
-        doc = self._pdf_service.get_persisted_document(file_id)
+        doc = self._queries.get_persisted_document(file_id)
 
         return PDFExtractResponse(
             id=doc.id,

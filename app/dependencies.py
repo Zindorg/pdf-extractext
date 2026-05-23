@@ -1,18 +1,22 @@
 """Dependency injection helpers for FastAPI application.
 
 This module provides FastAPI-compatible dependency injection functions.
-It serves as the wiring layer between infrastructure and the API layer.
+It acts as the wiring layer between infrastructure and the API layer,
+connecting concrete implementations without exposing them to consumers.
 """
 
 from fastapi import Depends, Request
 
 from app.repositories.mongo_pdf_repository import MongoPDFRepository
-from app.services.pdf_service import PDFService
+from app.services.pdf_commands import PDFCommands
+from app.services.pdf_extraction import PDFExtraction
+from app.services.pdf_queries import PDFQueries
 from app.use_cases.delete_pdf import DeletePDF
 from app.use_cases.download_text import DownloadExtractedText
 from app.use_cases.extract_text import ExtractText
 from app.use_cases.get_pdf import GetPDF
 from app.use_cases.list_pdfs import ListPDFs
+from app.use_cases.process_pdf import ProcessPDFFile
 
 
 # --- Database dependency ---
@@ -29,35 +33,53 @@ def get_pdf_repository(database=Depends(get_database)):
     return MongoPDFRepository(database=database)
 
 
-# --- Service dependency ---
+# --- Service dependencies ---
 
-def get_pdf_service(repository=Depends(get_pdf_repository)):
-    """Create PDF service with injected repository."""
-    return PDFService(repository=repository)
+def get_pdf_queries(repository=Depends(get_pdf_repository)):
+    """Create PDF queries service with injected repository."""
+    return PDFQueries(repository=repository)
+
+
+def get_pdf_extraction(repository=Depends(get_pdf_repository)):
+    """Create PDF extraction service with injected repository."""
+    return PDFExtraction(repository=repository)
+
+
+def get_pdf_commands(repository=Depends(get_pdf_repository)):
+    """Create PDF commands service with injected repository."""
+    return PDFCommands(repository=repository)
 
 
 # --- Use case dependency injectors ---
 
-def get_list_pdfs_use_case(service: PDFService = Depends(get_pdf_service)):
+def get_list_pdfs_use_case(queries=Depends(get_pdf_queries)):
     """Inject ListPDFs use case."""
-    return ListPDFs(service)
+    return ListPDFs(queries)
 
 
-def get_get_pdf_use_case(service: PDFService = Depends(get_pdf_service)):
+def get_get_pdf_use_case(queries=Depends(get_pdf_queries)):
     """Inject GetPDF use case."""
-    return GetPDF(service)
+    return GetPDF(queries)
 
 
-def get_extract_text_use_case(service: PDFService = Depends(get_pdf_service)):
+def get_extract_text_use_case(queries=Depends(get_pdf_queries)):
     """Inject ExtractText use case."""
-    return ExtractText(service)
+    return ExtractText(queries)
 
 
-def get_delete_pdf_use_case(service: PDFService = Depends(get_pdf_service)):
+def get_delete_pdf_use_case(commands=Depends(get_pdf_commands)):
     """Inject DeletePDF use case."""
-    return DeletePDF(service)
+    return DeletePDF(commands)
 
 
-def get_download_text_use_case(service: PDFService = Depends(get_pdf_service)):
+def get_download_text_use_case(queries=Depends(get_pdf_queries)):
     """Inject DownloadExtractedText use case."""
-    return DownloadExtractedText(service)
+    return DownloadExtractedText(queries)
+
+
+def get_process_pdf_use_case(
+    extraction=Depends(get_pdf_extraction),
+    queries=Depends(get_pdf_queries),
+):
+    """Inject ProcessPDFFile use case."""
+    return ProcessPDFFile(extraction, queries)

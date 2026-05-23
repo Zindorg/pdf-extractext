@@ -9,7 +9,7 @@ from app.dependencies import (
     get_extract_text_use_case,
     get_get_pdf_use_case,
     get_list_pdfs_use_case,
-    get_pdf_service,
+    get_process_pdf_use_case,
 )
 from app.exceptions import PDFNotFoundException
 from app.schemas.pdf_schemas import (
@@ -18,12 +18,12 @@ from app.schemas.pdf_schemas import (
     PDFListResponse,
     PDFUploadResponse,
 )
-from app.services.pdf_service import PDFService
 from app.use_cases.delete_pdf import DeletePDF
 from app.use_cases.download_text import DownloadExtractedText
 from app.use_cases.extract_text import ExtractText
 from app.use_cases.get_pdf import GetPDF
 from app.use_cases.list_pdfs import ListPDFs
+from app.use_cases.process_pdf import ProcessPDFFile
 
 router = APIRouter(prefix="/pdfs", tags=["PDF"])
 
@@ -65,24 +65,24 @@ def get_pdf(
 
 @router.post("", response_model=PDFUploadResponse)
 async def upload_pdf(
-    file: UploadFile = File(...), service: PDFService = Depends(get_pdf_service)
+    file: UploadFile = File(...), use_case: ProcessPDFFile = Depends(get_process_pdf_use_case)
 ) -> PDFUploadResponse:
     """Upload a PDF file, extract text, and persist metadata to MongoDB.
 
     Args:
         file: Uploaded PDF file.
-        service: Injected PDF service.
+        use_case: Injected ProcessPDFFile use case.
 
     Returns:
         Upload response with persisted document metadata.
     """
     content = await file.read()
-    result = await service.process_upload(content, file.filename)
+    result = await use_case.execute(content, file.filename)
     return PDFUploadResponse(**result)
 
 
 @router.get("/{file_id}/text", response_model=PDFExtractResponse)
-async def get_text(
+def get_text(
     file_id: str,
     use_case: ExtractText = Depends(get_extract_text_use_case),
 ) -> PDFExtractResponse:
@@ -95,7 +95,7 @@ async def get_text(
     Returns:
         Extracted text response.
     """
-    return await use_case.execute(file_id)
+    return use_case.execute(file_id)
 
 
 @router.get("/{doc_id}/download")
@@ -114,13 +114,13 @@ def download_pdf_text(
     Returns:
         StreamingResponse with text/plain content disposition.
     """
-    text, filename = use_case.execute(doc_id)
-
-    # Reemplazar .pdf por .txt para el nombre de descarga
-    download_filename = filename.replace(".pdf", ".txt") if filename.endswith(".pdf") else f"{filename}.txt"
+    doc = use_case.execute(doc_id)
+    download_filename = (
+        doc.filename.replace(".pdf", ".txt") if doc.filename.endswith(".pdf") else f"{doc.filename}.txt"
+    )
 
     return StreamingResponse(
-        use_case.stream_text(text),
+        use_case.stream_text(doc.text_content),
         media_type="text/plain",
         headers={
             "Content-Disposition": f'attachment; filename="{download_filename}"'

@@ -1,12 +1,11 @@
 """Pytest configuration and shared fixtures."""
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
-from app.services.pdf_service import PDFService
 
 
 @pytest.fixture
@@ -38,12 +37,6 @@ def mock_repository_with_duplicate(mock_repository):
     )
     mock_repository.find_by_checksum.return_value = existing_doc
     return mock_repository
-
-
-@pytest.fixture
-def pdf_service(mock_repository):
-    """Create PDFService with mocked repository."""
-    return PDFService(repository=mock_repository)
 
 
 @pytest.fixture

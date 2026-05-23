@@ -21,10 +21,10 @@ class TestGetPdf:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        mock_service = MagicMock()
-        mock_service.find_by_id.return_value = doc
+        mock_queries = MagicMock()
+        mock_queries.find_by_id.return_value = doc
 
-        use_case = GetPDF(mock_service)
+        use_case = GetPDF(mock_queries)
         result = use_case.execute("507f1f77bcf86cd799439011")
 
         assert result is not None
@@ -33,10 +33,10 @@ class TestGetPdf:
     """Obtener PDF inexistente."""
 
     def test_returns_none(self):
-        mock_service = MagicMock()
-        mock_service.find_by_id.return_value = None
+        mock_queries = MagicMock()
+        mock_queries.find_by_id.return_value = None
 
-        use_case = GetPDF(mock_service)
+        use_case = GetPDF(mock_queries)
         result = use_case.execute("nonexistent")
 
         assert result is None

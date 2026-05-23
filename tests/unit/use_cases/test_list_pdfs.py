@@ -11,10 +11,10 @@ class TestListPDFs:
     """Listado vacio retorna lista vacia."""
 
     def test_returns_empty_list(self):
-        mock_service = MagicMock()
-        mock_service.find_all.return_value = []
+        mock_queries = MagicMock()
+        mock_queries.find_all.return_value = []
 
-        use_case = ListPDFs(mock_service)
+        use_case = ListPDFs(mock_queries)
         result = use_case.execute()
 
         assert isinstance(result, PDFListResponse)
@@ -35,10 +35,10 @@ class TestListPDFs:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        mock_service = MagicMock()
-        mock_service.find_all.return_value = [doc]
+        mock_queries = MagicMock()
+        mock_queries.find_all.return_value = [doc]
 
-        use_case = ListPDFs(mock_service)
+        use_case = ListPDFs(mock_queries)
         result = use_case.execute()
 
         assert isinstance(result, PDFListResponse)

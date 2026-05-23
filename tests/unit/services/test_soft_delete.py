@@ -1,10 +1,10 @@
-"""Tests para PDFService.soft_delete."""
+"""Tests para PDFCommands.soft_delete."""
 
 from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.models.pdf_document import PDFDocument
-from app.services.pdf_service import PDFService
+from app.services.pdf_commands import PDFCommands
 
 
 class TestSoftDelete:
@@ -25,8 +25,8 @@ class TestSoftDelete:
         mock_repo.find_by_id.return_value = doc
         mock_repo.soft_delete.return_value = True
 
-        service = PDFService(repository=mock_repo)
-        result = service.soft_delete("507f1f77bcf86cd799439011")
+        commands = PDFCommands(repository=mock_repo)
+        result = commands.soft_delete("507f1f77bcf86cd799439011")
 
         assert result is True
 
@@ -36,7 +36,7 @@ class TestSoftDelete:
         mock_repo = MagicMock()
         mock_repo.find_by_id.return_value = None
 
-        service = PDFService(repository=mock_repo)
-        result = service.soft_delete("507f1f77bcf86cd799439011")
+        commands = PDFCommands(repository=mock_repo)
+        result = commands.soft_delete("507f1f77bcf86cd799439011")
 
         assert result is False

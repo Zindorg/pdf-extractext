@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.exceptions import DuplicateDocumentException, InvalidFileException, PDFExtractionException
+from app.exceptions import DuplicateDocumentException, InvalidFileException
 from app.models.pdf_document import PDFDocument
 from app.use_cases.process_pdf import ProcessPDFFile
 
@@ -24,10 +24,12 @@ class TestProcessPdfFile:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        mock_svc = MagicMock()
-        mock_svc.process_pdf = AsyncMock(return_value=doc)
+        mock_extraction = MagicMock()
+        mock_extraction.process_pdf = AsyncMock(return_value=doc)
 
-        use_case = ProcessPDFFile(mock_svc)
+        mock_queries = MagicMock()
+
+        use_case = ProcessPDFFile(mock_extraction, mock_queries)
         result = await use_case.execute(b"pdf content", "test.pdf")
 
         assert result == doc
@@ -36,23 +38,27 @@ class TestProcessPdfFile:
     """Procesar un PDF vacio lanza exception."""
 
     async def test_raises_exception(self):
-        mock_svc = MagicMock()
-        mock_svc.process_pdf = AsyncMock(
+        mock_extraction = MagicMock()
+        mock_extraction.process_pdf = AsyncMock(
             side_effect=InvalidFileException("File is empty")
         )
 
-        use_case = ProcessPDFFile(mock_svc)
+        mock_queries = MagicMock()
+
+        use_case = ProcessPDFFile(mock_extraction, mock_queries)
         with pytest.raises(InvalidFileException):
             await use_case.execute(b"", "test.pdf")
 
     """Procesar un PDF ya existente lanza exception."""
 
     async def test_raises_on_duplicate(self):
-        mock_svc = MagicMock()
-        mock_svc.process_pdf = AsyncMock(
+        mock_extraction = MagicMock()
+        mock_extraction.process_pdf = AsyncMock(
             side_effect=DuplicateDocumentException("Duplicate")
         )
 
-        use_case = ProcessPDFFile(mock_svc)
+        mock_queries = MagicMock()
+
+        use_case = ProcessPDFFile(mock_extraction, mock_queries)
         with pytest.raises(DuplicateDocumentException):
             await use_case.execute(b"pdf content", "test.pdf")

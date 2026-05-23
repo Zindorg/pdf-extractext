@@ -1,16 +1,34 @@
 """Use case for processing PDF upload and persisting text to MongoDB."""
 
-from app.services.pdf_service import PDFService
+from typing import Any
+
+from app.services.pdf_extraction import PDFExtraction
+from app.services.pdf_queries import PDFQueries
 
 
 class ProcessPDFFile:
     """Handle PDF upload, extract text, and persist to database."""
 
-    def __init__(self, pdf_service: PDFService):
-        """Initialize with PDF service."""
-        self._pdf_service = pdf_service
+    def __init__(self, extraction: PDFExtraction, queries: PDFQueries) -> None:
+        """Initialize with specialized services.
 
-    async def execute(self, file_content: bytes, filename: str):
-        """Process PDF file and persist extracted text to database."""
-        document = await self._pdf_service.process_pdf(file_content, filename)
-        return document
+        Args:
+            extraction: PDF extraction service.
+            queries: PDF queries service for persistence checks.
+        """
+        self._extraction = extraction
+        self._queries = queries
+
+    async def execute(self, file_content: bytes, filename: str) -> dict[str, Any]:
+        """Process PDF file, extract text, persist to database, and return DTO."""
+        document = await self._extraction.process_pdf(file_content, filename)
+
+        return {
+            "id": document.id,
+            "filename": document.filename,
+            "page_count": document.page_count,
+            "file_size": document.file_size,
+            "text_preview": document.text_content[:500],
+            "checksum": document.checksum,
+            "is_duplicate": False,
+        }

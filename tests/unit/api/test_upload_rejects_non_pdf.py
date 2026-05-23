@@ -1,5 +1,6 @@
 """Tests para POST /pdfs - rechazar no-PDF."""
 
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 from fastapi.testclient import TestClient
@@ -12,10 +13,10 @@ class TestUploadRejectsNonPdf:
     """Subir archivo no-PDF retorna 422."""
 
     def test_rejects_non_pdf_content_type(self):
-        mock_svc = MagicMock()
-        mock_svc.process_upload = AsyncMock(side_effect=InvalidFileException("File must be a PDF"))
+        mock_extraction = MagicMock()
+        mock_extraction.process_pdf = AsyncMock(side_effect=InvalidFileException("File must be a PDF"))
 
-        client = TestClient(_create_test_app(mock_svc))
+        client = TestClient(_create_test_app(mock_extraction=mock_extraction))
         resp = client.post(
             "/pdfs",
             files={"file": ("image.png", b"png data", "image/png")},

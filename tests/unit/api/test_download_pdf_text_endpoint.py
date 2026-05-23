@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
+from app.exceptions import PDFNotFoundException
 from app.models.pdf_document import PDFDocument
 from tests.unit.api.utils import _create_test_app
 
@@ -23,10 +24,10 @@ class TestDownloadText:
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        mock_svc = MagicMock()
-        mock_svc.get_persisted_document.return_value = doc
+        mock_queries = MagicMock()
+        mock_queries.get_persisted_document.return_value = doc
 
-        client = TestClient(_create_test_app(mock_svc))
+        client = TestClient(_create_test_app(mock_queries=mock_queries))
         resp = client.get("/pdfs/507f1f77bcf86cd799439011/download")
 
         assert resp.status_code == 200
@@ -36,10 +37,10 @@ class TestDownloadText:
     """Descargar texto de PDF inexistente retorna 404."""
 
     def test_returns_404(self):
-        mock_svc = MagicMock()
-        mock_svc.get_persisted_document.return_value = None
+        mock_queries = MagicMock()
+        mock_queries.get_persisted_document.return_value = None
 
-        client = TestClient(_create_test_app(mock_svc))
+        client = TestClient(_create_test_app(mock_queries=mock_queries))
         resp = client.get("/pdfs/nonexistent/download")
 
         assert resp.status_code == 404

@@ -3,26 +3,34 @@
 from typing import Generator
 
 from app.exceptions import PDFNotFoundException
-from app.services.pdf_service import PDFService
+from app.models.pdf_document import PDFDocument
+from app.services.pdf_queries import PDFQueries
 
 
 class DownloadExtractedText:
     """Retrieve extracted text and format for download as .txt file."""
 
-    def __init__(self, pdf_service: PDFService):
-        """Initialize with PDF service."""
-        self._pdf_service = pdf_service
+    def __init__(self, queries: PDFQueries):
+        """Initialize with queries service.
 
-    def execute(self, doc_id: str) -> tuple[str, str]:
-        """Get formatted text and filename for download from persisted document.
+        Args:
+            queries: Injected PDF queries service.
+        """
+        self._queries = queries
+
+    def execute(self, doc_id: str) -> PDFDocument:
+        """Get persisted document for download.
+
+        Args:
+            doc_id: Document ID.
 
         Returns:
-            Tuple of (text_content, filename)
+            PDFDocument with text content.
         """
-        doc = self._pdf_service.get_persisted_document(doc_id)
+        doc = self._queries.get_persisted_document(doc_id)
         if doc is None or not doc.text_content:
             raise PDFNotFoundException(f"Document text not available: {doc_id}")
-        return doc.text_content, doc.filename
+        return doc
 
     @staticmethod
     def stream_text(text_content: str) -> Generator[bytes, None, None]:

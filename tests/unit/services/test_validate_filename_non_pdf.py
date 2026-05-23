@@ -1,9 +1,9 @@
-"""Tests para _validate_filename - extension no PDF."""
+"""Tests para validate_filename - extension no PDF."""
 
 import pytest
 
 from app.exceptions import InvalidFileException
-from app.services.pdf_service import _validate_filename
+from app.services.pdf_utils import validate_filename
 
 
 class TestValidateFilenameNonPdf:
@@ -11,4 +11,4 @@ class TestValidateFilenameNonPdf:
 
     def test_raises_exception(self):
         with pytest.raises(InvalidFileException):
-            _validate_filename("document.txt")
+            validate_filename("document.txt")

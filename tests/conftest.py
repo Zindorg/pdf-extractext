@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
-from app.repositories.repository_factory import RepositoryFactory
 from app.services.pdf_service import PDFService
 
 
@@ -45,14 +44,6 @@ def mock_repository_with_duplicate(mock_repository):
 def pdf_service(mock_repository):
     """Create PDFService with mocked repository."""
     return PDFService(repository=mock_repository)
-
-
-@pytest.fixture
-def reset_repository_factory():
-    """Reset repository factory before and after test."""
-    RepositoryFactory.reset()
-    yield
-    RepositoryFactory.reset()
 
 
 @pytest.fixture

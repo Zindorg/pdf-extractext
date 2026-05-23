@@ -1,28 +1,33 @@
 ## Propósito general
 
-La carpeta `tests/` contiene las pruebas automatizadas del proyecto, organizadas en tres niveles principales:
+La carpeta `tests/` contiene las pruebas automatizadas del proyecto, organizadas en dos niveles principales:
 
 - `tests/unit/`: pruebas unitarias para lógica de negocio, validaciones, servicios, repositorios, infraestructura y rutas.
 - `tests/integration/`: pruebas de integración que validan operaciones completas con MongoDB y el ciclo de vida de los documentos.
-- `tests/legacy/`: pruebas del API legacy basado en `app.api.legacy`, que revisan flujos de subida y descarga.
 
 También incluye configuración compartida y fixtures reutilizables.
 
 ## Estructura principal
 
 ### `tests/conftest.py`
-Fixtures globales utilizadas por los tests unitarios y algunos tests compartidos:
+Fixtures globales utilizadas por los tests unitarios:
 - `mock_repository`: mock de `PDFRepositoryInterface` con los métodos CRUD.
 - `mock_repository_with_duplicate`: repositorio simulado con documento existente para pruebas de duplicados.
 - `pdf_service`: servicio `PDFService` creado con repositorio mock.
-- `reset_repository_factory`: resetea el factory de repositorios antes y después de cada prueba.
 - `valid_pdf_content`: contenido PDF válido utilizado en pruebas.
 - `sample_pdf_document`: documento de ejemplo para pruebas de dominio.
 
 ### `tests/fixtures/`
 
-Contiene utilidades y datos de prueba:
-- `generate_fixtures.py`: script para generar fixtures si se necesita crear datos de prueba adicionales.
+Contiene archivos de prueba para extracción de PDF:
+- `valid.pdf`: PDF con texto válido.
+- `empty.pdf`: PDF vacío sin contenido.
+- `multipage.pdf`: PDF con múltiples páginas.
+- `corrupted.pdf`: PDF con estructura corrupta.
+- `unicode.pdf`: PDF con caracteres Unicode.
+- `image_only.pdf`: PDF sin texto (solo imágenes).
+- `large.pdf`: PDF de gran tamaño.
+
 ## Carpetas de tests
 
 ### `tests/unit/`
@@ -30,69 +35,68 @@ Contiene utilidades y datos de prueba:
 Pruebas unitarias que verifican comportamientos aislados y validaciones.
 
 Archivos relevantes:
-- `test_upload_flow.py`: flujo de subida de archivos.
-- `test_routes_integration.py`: pruebas de integración de rutas dentro del módulo unitario.
-- `api/test_pdf_routes.py`: routes de PDF de la API.
-- `services/test_pdf_service.py`: lógica de negocio de `PDFService`.
-- `services/test_validation.py`: validaciones de entrada y reglas de negocio.
-- `repositories/test_mongo_repository.py`: pruebas del repositorio MongoDB.
-- `infrastructure/test_pdf_extractor.py`: extracción de texto desde PDF.
-- `infrastructure/test_file_management.py`: manejo de archivos y errores de sistema de archivos.
-- `infrastructure/test_database_connection.py`: conexión y configuración de la base de datos.
-- `domain/test_pdf_document.py`: pruebas del modelo `PDFDocument`.
-- `domain/test_repository_interface.py`: contrato del repositorio de PDFs.
+- `api/test_upload_valid.py`: subida de PDF válido.
+- `api/test_upload_duplicate.py`: detección de duplicados.
+- `api/test_upload_rejects_empty.py`: rechazo de archivos vacíos.
+- `api/test_upload_rejects_non_pdf.py`: rechazo de archivos no-PDF.
+- `api/test_list_pdfs_endpoint.py`: listado de documentos.
+- `api/test_get_pdf_endpoint.py`: obtención de documento por ID.
+- `api/test_extract_text_endpoint.py`: extracción de texto.
+- `api/test_download_pdf_text_endpoint.py`: descarga de texto.
+- `api/test_delete_pdf_endpoint.py`: eliminación de documentos.
+- `services/<varios>.py`: checksums, validaciones, sanitización, soft-delete, restore, actualización.
+- `repositories/test_mongo_repository_*.py`: pruebas del repositorio MongoDB (CRUD, búsquedas, soft-delete, restore).
+- `infrastructure/test_pdf_extractor_valid.py`: extracción de texto PDF válido.
+- `infrastructure/test_pdf_extractor_unicode.py`: extracción con caracteres Unicode.
+- `infrastructure/test_main_lifespan.py`: ciclo de vida de la aplicación con `app.state`.
+- `domain/test_pdf_document_creation.py`: creación del modelo `PDFDocument`.
+- `domain/test_pdf_document_update.py`: actualización del modelo `PDFDocument`.
+- `main.py`: pruebas del punto de entrada de la aplicación.
+- `use_cases/`: pruebas de casos de uso (list, get, extract, delete, download).
 
 ### `tests/integration/`
 
 Pruebas de integración que usan MongoDB y validan el comportamiento completo del sistema.
 
 Archivos relevantes:
-- `test_mongo_integration.py`: integración general con MongoDB.
-- `test_creation_document/test_create_document.py`: creación de documentos en la base de datos.
-- `test_delete/soft_delete/test_soft_delete.py`: borrado lógico de documentos.
-- `test_delete/by id/test_hard_delete.py`: borrado físico por ID.
-- `test_find_document/test_find_by_id.py`: búsqueda de documento por ID.
-- `test_find_document/test_find_all.py`: búsqueda de todos los documentos.
-- `test_find_document/checksum/test_find_by_checksum.py`: búsqueda por checksum.
-- `test_life_cicle/test_document_lifecycle.py`: ciclo de vida completo del documento.
-- `test_restore/test_restore_document.py`: restauración de documentos borrados.
-- `test_update/test_update_document.py`: actualización de datos de documentos.
+- `test_create_document.py`: creación de documentos en la base de datos.
+- `test_soft_delete.py`: borrado lógico de documentos.
+- `test_hard_delete.py`: borrado físico por ID.
+- `test_find_by_id.py`: búsqueda de documento por ID.
+- `test_find_all.py`: búsqueda de todos los documentos.
+- `test_find_by_checksum.py`: búsqueda por checksum.
+- `test_document_lifecycle.py`: ciclo de vida completo del documento.
+- `test_restore_document.py`: restauración de documentos borrados.
+- `test_update_document.py`: actualización de datos de documentos.
 
 Fixture específica:
 - `tests/integration/conftest.py`: provee `mongo_repository` conectado a MongoDB local y limpia los datos de prueba antes y después.
 
-### `tests/legacy/`
-
-Pruebas del API legacy que verifican los endpoints antiguos y el comportamiento de subida/descarga.
-
-Archivos relevantes:
-- `test_upload.py`: pruebas de subida de archivos al API legacy.
-- `test_download.py`: pruebas de descarga de archivos.
-
-Fixture específica:
-- `tests/legacy/conftest.py`: configura `TestClient` de FastAPI y provee muestras de archivos y checksum.
 ## Cómo ejecutar los tests
 
 ```bash
+# Ejecutar todos los tests
+uv run pytest -v
+
 # Ejecutar todos los tests unitarios
 uv run pytest tests/unit/ -v
 
-# Ejecutar todos los tests de integración
+# Ejecutar todos los tests de integración (requiere MongoDB)
 uv run pytest tests/integration/ -v
 
-# Ejecutar todos los tests legacy
-uv run pytest tests/legacy/ -v
+# Ejecutar con cobertura de código
+uv run pytest --cov=app --cov-report=term-missing
 
 # Ejecutar un archivo específico
-uv run pytest tests/unit/services/test_pdf_service.py -v
-uv run pytest tests/integration/test_mongo_integration.py -v
-uv run pytest tests/legacy/test_upload.py -v
+uv run pytest tests/unit/services/test_generate_checksum_is_sha256.py -v
+uv run pytest tests/integration/test_create_document.py -v
 
-# Generar fixtures de prueba
-uv run python tests/fixtures/generate_fixtures.py
+# Ejecutar un test específico por nombre
+uv run pytest -k test_returns_200_with_data -v
 ```
 
 ## Notas importantes
 - `tests/integration/` requiere MongoDB corriendo en `localhost:27017`.
-- `tests/legacy/` usa `FastAPI TestClient` para simular peticiones al API legacy.
+- Los tests unitarios no requieren MongoDB (usen mocks).
+- Para tests de API unitarios, se usa `FastAPI TestClient` con `app.dependency_overrides` para reemplar dependencias por mocks.
 - Los archivos `__init__.py` en subcarpetas permiten que `pytest` descubra correctamente los paquetes de tests.

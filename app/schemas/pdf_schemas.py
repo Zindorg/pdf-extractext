@@ -58,17 +58,6 @@ class PDFUploadResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class PDFExtractRequest(BaseModel):
-    """Request for text extraction from PDF."""
-
-    start_page: int = Field(default=1, ge=1)
-    end_page: int = Field(default=0, ge=0)
-
-    model_config = ConfigDict(
-        json_schema_extra={"example": {"start_page": 1, "end_page": 5}}
-    )
-
-
 class PDFExtractResponse(BaseModel):
     """Response with extracted text."""
 

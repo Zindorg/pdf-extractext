@@ -1,6 +1,6 @@
-"""Tests para _sanitize_filename - limita longitud."""
+"""Tests para sanitize_filename - limita longitud."""
 
-from app.services.pdf_service import _sanitize_filename
+from app.services.pdf_utils import sanitize_filename
 
 
 class TestSanitizeFilenameLimitsLength:
@@ -8,4 +8,4 @@ class TestSanitizeFilenameLimitsLength:
 
     def test_limits_to_50_chars(self):
         long_name = "a" * 100 + ".pdf"
-        assert len(_sanitize_filename(long_name)) <= 50
+        assert len(sanitize_filename(long_name)) <= 50

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from main import create_application, lifespan
+from app.main import create_application, lifespan
 
 
 class TestCreateApplication:
@@ -26,14 +26,28 @@ class TestCreateApplication:
 
 
 class TestLifespan:
-    """Lifespan llama setup y close correctamente."""
+    """Lifespan llama setup correctamente."""
 
     async def test_setup_and_teardown(self):
-        with patch("main.setup_database") as mock_setup:
-            with patch("main.close_connection") as mock_close:
-                with patch("main.RepositoryFactory"):
-                    with patch("main.set_pdf_repository"):
-                        app = create_application()
-                        async with lifespan(app):
-                            pass
-                        mock_setup.assert_called_once()
+        with patch("app.main.setup_database") as mock_setup:
+            with patch("app.main.MongoClient"):
+                app = create_application()
+                async with lifespan(app):
+                    pass
+                mock_setup.assert_called_once()
+
+    async def test_sets_app_state(self):
+        """Lifespan configura app.state correctamente."""
+        with patch("app.main.setup_database"):
+            with patch("app.main.MongoClient") as mock_client:
+                mock_instance = MagicMock()
+                mock_db = MagicMock()
+                mock_client.return_value = mock_instance
+                mock_instance.__getitem__ = MagicMock(return_value=mock_db)
+
+                app = create_application()
+                async with lifespan(app):
+                    pass
+
+                assert hasattr(app.state, "mongodb_client")
+                assert hasattr(app.state, "mongodb_database")

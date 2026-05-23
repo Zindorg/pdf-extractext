@@ -1,26 +1,27 @@
 """Main application entry point with MongoDB configuration."""
 
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pymongo import MongoClient
 
 from app.api.exception_handlers import pdf_exception_handlers
-from app.routes import pdf_routes
-from app.routes.pdf_routes import set_pdf_repository
 from app.config.settings import settings
 from app.infrastructure.database_setup import setup_database
-from app.infrastructure.database_connection import close_connection
-from app.repositories.repository_factory import RepositoryFactory
+from app.routes import pdf_routes
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     """Manage application lifecycle: startup and shutdown."""
-    setup_database()
-    mongo_repository = RepositoryFactory.get_pdf_repository()
-    set_pdf_repository(mongo_repository)
+    client = MongoClient(settings.mongodb_uri)
+    database = client[settings.mongodb_database]
+    application.state.mongodb_client = client
+    application.state.mongodb_database = database
+    setup_database(database)
     yield
-    close_connection()
+    client.close()
 
 
 def create_application() -> FastAPI:

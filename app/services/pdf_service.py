@@ -1,137 +1,103 @@
-"""Business logic service for PDF processing."""
+"""Facade for PDF business operations.
 
-import hashlib
-import re
-from pathlib import Path
+This module provides a unified interface to PDF services. It delegates
+to specialized modules for specific responsibilities.
+
+Usage:
+    service = PDFService(repository)
+    await service.process_upload(content, filename)
+    text = service.extract_text(content)
+"""
+
 from typing import List, Optional
 
-from app.exceptions import (
-    DuplicateDocumentException,
-    InvalidFileException,
-    PDFExtractionException,
-)
-from app.infrastructure import pdf_extractor
 from app.models.pdf_document import PDFDocument
 from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
-from app.repositories.repository_factory import RepositoryFactory
-from app.services.interfaces.pdf_service_interface import PDFServiceInterface
+from app.services.pdf_commands import PDFCommands
+from app.services.pdf_extraction import PDFExtraction
+from app.services.pdf_queries import PDFQueries
+from app.services.pdf_upload import PDFUpload
+from app.services.pdf_utils import generate_checksum
 
 
-def _sanitize_filename(filename: str) -> str:
-    """Sanitize filename for safe usage."""
-    base = Path(filename).stem
-    sanitized = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
-    return sanitized[:50] or "document"
+class PDFService:
+    """Facade providing all PDF business operations."""
 
+    def __init__(self, repository: PDFRepositoryInterface) -> None:
+        """Initialize service with repository.
 
-def _validate_filename(filename: str) -> None:
-    """Validate filename format."""
-    if not filename:
-        raise InvalidFileException("Filename cannot be empty")
-    if not filename.strip():
-        raise InvalidFileException("Filename cannot be whitespace only")
-    suffix = Path(filename).suffix.lower()
-    if not suffix or suffix != ".pdf":
-        raise InvalidFileException("File must be a PDF")
+        Args:
+            repository: PDF repository for data access.
+        """
+        self._repository = repository
+        self._queries = PDFQueries(repository)
+        self._commands = PDFCommands(repository)
+        self._extraction = PDFExtraction(repository)
+        self._upload = PDFUpload(repository)
 
-
-def _validate_content(file_content: bytes) -> None:
-    """Validate file content is not empty."""
-    if not file_content:
-        raise InvalidFileException("File is empty")
-
-
-class PDFService(PDFServiceInterface):
-    """Service for PDF business operations."""
-
-    def __init__(self, repository: PDFRepositoryInterface = None) -> None:
-        """Initialize service with repository."""
-        self._repository = repository or RepositoryFactory.get_pdf_repository()
-
-    def generate_checksum(self, file_content: bytes) -> str:
-        """Generate SHA-256 checksum from file content."""
-        return hashlib.sha256(file_content).hexdigest()
-
-    def extract_text(self, file_content: bytes) -> str:
-        """Extract text from PDF bytes and return it."""
-        try:
-            text, _ = pdf_extractor.extract_text(file_content)
-            return text
-        except Exception as e:
-            raise PDFExtractionException(f"Text extraction failed: {e}") from e
+    # --- Queries ---
 
     def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
         """Find PDF document by checksum."""
-        return self._repository.find_by_checksum(checksum)
+        return self._queries.find_by_checksum(checksum)
 
     def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
         """Find PDF document by ID."""
-        return self._repository.find_by_id(doc_id)
+        return self._queries.find_by_id(doc_id)
 
     def find_all(self) -> List[PDFDocument]:
         """Find all PDF documents."""
-        return self._repository.find_all()
+        return self._queries.find_all()
+
+    def get_persisted_document(self, doc_id: str) -> PDFDocument:
+        """Get persisted PDF document by ID.
+
+        Raises:
+            PDFNotFoundException: If document not found.
+        """
+        return self._queries.get_persisted_document(doc_id)
+
+    # --- Commands ---
 
     def update_document(self, document: PDFDocument) -> Optional[PDFDocument]:
         """Update an existing PDF document."""
-        return self._repository.update(document)
+        return self._commands.update_document(document)
 
     def soft_delete(self, doc_id: str) -> bool:
         """Soft delete PDF document by ID."""
-        doc = self._repository.find_by_id(doc_id)
-        if doc is None or doc.deleted_at is not None:
-            return False
-        return self._repository.soft_delete(doc_id)
+        return self._commands.soft_delete(doc_id)
 
     def delete_by_id(self, doc_id: str) -> bool:
         """Permanently delete PDF document by ID."""
-        return self._repository.delete_by_id(doc_id)
+        return self._commands.delete_by_id(doc_id)
 
     def restore(self, doc_id: str) -> bool:
         """Restore a soft-deleted PDF document."""
-        doc = self._repository.find_by_id(doc_id)
-        if doc is None or doc.deleted_at is None:
-            return False
-        return self._repository.restore(doc_id)
+        return self._commands.restore(doc_id)
+
+    # --- Extraction ---
+
+    def extract_text(self, file_content: bytes) -> str:
+        """Extract text from PDF bytes and return it."""
+        return self._extraction.extract_text(file_content)
 
     async def process_pdf(self, file_content: bytes, filename: str) -> PDFDocument:
         """Process a new PDF and persist to MongoDB."""
-        _validate_filename(filename)
-        _validate_content(file_content)
+        return await self._extraction.process_pdf(file_content, filename)
 
-        try:
-            checksum = self.generate_checksum(file_content)
-            existing = self.find_by_checksum(checksum)
-            if existing:
-                raise DuplicateDocumentException(
-                    f"Document with checksum {checksum} already exists",
-                    existing_id=existing.id,
-                )
+    # --- Upload ---
 
-            text, page_count = pdf_extractor.extract_text(file_content)
+    async def process_upload(self, file_content: bytes, filename: str) -> dict:
+        """
+        Validate, process and persist a PDF upload.
 
-            if not text or not text.strip():
-                raise PDFExtractionException("No text content extracted from PDF")
+        Returns a dictionary with document data and duplicate flag.
+        """
+        return await self._upload.process_upload(file_content, filename)
 
-            document = PDFDocument(
-                checksum=checksum,
-                filename=filename,
-                file_size=len(file_content),
-                page_count=page_count,
-                text_content=text,
-            )
+    # --- Utilities ---
 
-            return self._repository.create(document)
-
-        except (InvalidFileException, DuplicateDocumentException):
-            raise
-        except Exception as e:
-            raise PDFExtractionException(f"Error processing PDF: {e}") from e
-
-    async def get_persisted_document(self, doc_id: str) -> Optional[PDFDocument]:
-        """Get persisted PDF document by ID."""
-        from app.exceptions import PDFNotFoundException
-        doc = self._repository.find_by_id(doc_id)
-        if doc is None:
-            raise PDFNotFoundException(f"PDF not found: {doc_id}")
-        return doc
+    @staticmethod
+    def generate_checksum(file_content: bytes) -> str:
+        """Generate SHA-256 checksum from file content."""
+        return generate_checksum(file_content)

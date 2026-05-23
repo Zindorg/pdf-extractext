@@ -13,12 +13,16 @@ class DownloadExtractedText:
         """Initialize with PDF service."""
         self._pdf_service = pdf_service
 
-    def execute(self, doc_id: str) -> str:
-        """Get formatted text for download from persisted document."""
+    def execute(self, doc_id: str) -> tuple[str, str]:
+        """Get formatted text and filename for download from persisted document.
+
+        Returns:
+            Tuple of (text_content, filename)
+        """
         doc = self._pdf_service.get_persisted_document(doc_id)
         if doc is None or not doc.text_content:
             raise PDFNotFoundException(f"Document text not available: {doc_id}")
-        return doc.text_content
+        return doc.text_content, doc.filename
 
     @staticmethod
     def stream_text(text_content: str) -> Generator[bytes, None, None]:

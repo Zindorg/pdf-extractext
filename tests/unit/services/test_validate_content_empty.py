@@ -1,9 +1,9 @@
-"""Tests para _validate_content - contenido vacio."""
+"""Tests para validate_content - contenido vacio."""
 
 import pytest
 
 from app.exceptions import InvalidFileException
-from app.services.pdf_service import _validate_content
+from app.services.pdf_utils import validate_content
 
 
 class TestValidateContentEmpty:
@@ -11,4 +11,4 @@ class TestValidateContentEmpty:
 
     def test_raises_exception(self):
         with pytest.raises(InvalidFileException):
-            _validate_content(b"")
+            validate_content(b"")

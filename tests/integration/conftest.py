@@ -1,7 +1,9 @@
 """Shared fixtures for integration tests."""
 
+from pymongo import MongoClient
 import pytest
-from app.infrastructure.database_connection import get_database
+
+from app.config.settings import settings
 from app.infrastructure.database_setup import create_indexes
 from app.repositories.mongo_pdf_repository import MongoPDFRepository
 
@@ -13,7 +15,8 @@ def mongo_repository():
     Nota: Requiere MongoDB corriendo en localhost:27017
     """
     try:
-        db = get_database()
+        client = MongoClient(settings.mongodb_uri)
+        db = client[settings.mongodb_database]
         create_indexes(db)
         repository = MongoPDFRepository(database=db)
 

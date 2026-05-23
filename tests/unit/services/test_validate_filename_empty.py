@@ -1,9 +1,9 @@
-"""Tests para _validate_filename - filename vacio."""
+"""Tests para validate_filename - filename vacio."""
 
 import pytest
 
 from app.exceptions import InvalidFileException
-from app.services.pdf_service import _validate_filename
+from app.services.pdf_utils import validate_filename
 
 
 class TestValidateFilenameEmpty:
@@ -11,4 +11,4 @@ class TestValidateFilenameEmpty:
 
     def test_raises_exception(self):
         with pytest.raises(InvalidFileException):
-            _validate_filename("")
+            validate_filename("")

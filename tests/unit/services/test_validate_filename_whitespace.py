@@ -1,9 +1,9 @@
-"""Tests para _validate_filename - solo espacios."""
+"""Tests para validate_filename - solo espacios."""
 
 import pytest
 
 from app.exceptions import InvalidFileException
-from app.services.pdf_service import _validate_filename
+from app.services.pdf_utils import validate_filename
 
 
 class TestValidateFilenameWhitespace:
@@ -11,4 +11,4 @@ class TestValidateFilenameWhitespace:
 
     def test_raises_exception(self):
         with pytest.raises(InvalidFileException):
-            _validate_filename("   ")
+            validate_filename("   ")

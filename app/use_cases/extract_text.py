@@ -1,6 +1,6 @@
 """Use case for extracting text from a persisted PDF document."""
 
-from app.schemas.pdf_schemas import PDFExtractRequest, PDFExtractResponse
+from app.schemas.pdf_schemas import PDFExtractResponse
 from app.services.pdf_service import PDFService
 
 
@@ -15,17 +15,16 @@ class ExtractText:
         """
         self._pdf_service = pdf_service
 
-    async def execute(self, file_id: str, request: PDFExtractRequest = None) -> PDFExtractResponse:
+    def execute(self, file_id: str) -> PDFExtractResponse:
         """Retrieve extracted text from a persisted document.
 
         Args:
             file_id: Document ID.
-            request: Optional page range request (reserved for future use).
 
         Returns:
             PDFExtractResponse with extracted text.
         """
-        doc = await self._pdf_service.get_persisted_document(file_id)
+        doc = self._pdf_service.get_persisted_document(file_id)
 
         return PDFExtractResponse(
             id=doc.id,

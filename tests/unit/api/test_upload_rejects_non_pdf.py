@@ -1,9 +1,10 @@
 """Tests para POST /pdfs - rechazar no-PDF."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from fastapi.testclient import TestClient
 
+from app.exceptions import InvalidFileException
 from tests.unit.api.utils import _create_test_app
 
 
@@ -12,6 +13,8 @@ class TestUploadRejectsNonPdf:
 
     def test_rejects_non_pdf_content_type(self):
         mock_svc = MagicMock()
+        mock_svc.process_upload = AsyncMock(side_effect=InvalidFileException("File must be a PDF"))
+
         client = TestClient(_create_test_app(mock_svc))
         resp = client.post(
             "/pdfs",

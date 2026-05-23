@@ -1,0 +1,18 @@
+services:
+  app:
+    image: pdf-extractext:v1.0.1
+    container_name: app
+    ports:
+      - 8000:8000
+    networks:
+      - mired
+    environment:
+      - TZ=${TZ}
+      - MONGODB_URI=mongodb://${USERNAME}:${PASSWORD}@mongodb:27017/?authSource=admin
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
+      - MONGO_DATA_PATH=${MONGO_DATA_PATH}
+
+networks:
+  mired:
+    external: true

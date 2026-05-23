@@ -4,13 +4,10 @@ from pymongo import ASCENDING, DESCENDING
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-from app.infrastructure.database_connection import get_database
 
-
-def create_indexes(db: Database = None) -> None:
+def create_indexes(db: Database) -> None:
     """Create all required indexes for the application."""
-    database = db if db is not None else get_database()
-    collection: Collection = database["pdf_documents"]
+    collection: Collection = db["pdf_documents"]
 
     # Unique index on checksum for duplicate detection
     collection.create_index(
@@ -32,13 +29,7 @@ def create_indexes(db: Database = None) -> None:
     )
 
 
-def setup_database() -> Database:
+def setup_database(db: Database) -> Database:
     """Initialize database with proper configuration."""
-    db = get_database()
     create_indexes(db)
     return db
-
-
-def get_collection() -> Collection:
-    """Get the pdf_documents collection from singleton connection."""
-    return get_database()["pdf_documents"]

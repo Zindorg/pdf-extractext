@@ -9,7 +9,6 @@ from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError, PyMongoError
 
 from app.exceptions import DuplicateDocumentException, RepositoryException
-from app.infrastructure.database_connection import get_database
 from app.models.pdf_document import PDFDocument
 from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryInterface
 
@@ -17,9 +16,9 @@ from app.repositories.interfaces.pdf_repository_interface import PDFRepositoryIn
 class MongoPDFRepository(PDFRepositoryInterface):
     """MongoDB implementation of PDF repository."""
 
-    def __init__(self, database: Database = None):
+    def __init__(self, database: Database):
         """Initialize repository with database connection."""
-        self._db: Database = database if database is not None else get_database()
+        self._db: Database = database
         self._collection: Collection = self._db["pdf_documents"]
 
     def _to_document(self, pdf_doc: PDFDocument) -> dict:

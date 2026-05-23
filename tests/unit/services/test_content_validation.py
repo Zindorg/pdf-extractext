@@ -3,7 +3,7 @@
 import pytest
 
 from app.exceptions import InvalidFileException
-from app.services.pdf_service import _validate_content
+from app.services.pdf_utils import validate_content
 
 
 class TestContentValidation:
@@ -11,7 +11,7 @@ class TestContentValidation:
 
     def test_raises_exception(self):
         with pytest.raises(InvalidFileException):
-            _validate_content(b"")
+            validate_content(b"")
     
     def test_accepts_valid(self):
-        assert _validate_content(b"some content") is None
+        assert validate_content(b"some content") is None

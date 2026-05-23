@@ -1,6 +1,9 @@
 services:
   app:
     image: pdf-extractext:v1.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: app
     ports:
       - 8000:8000

@@ -1,6 +1,6 @@
 # PDF-Extractext
 
-[![Python 3.13](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248.svg?logo=mongodb)](https://www.mongodb.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,14 +13,15 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 
 ## Tabla de Contenidos
 
-- [Características](#-características)
-- [Requisitos Previos](#-requisitos-previos)
-- [Dependencias](#-dependencias)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [API Endpoints](#-api-endpoints)
-- [Principios Aplicados](#-principios-aplicados)
-- [Autores](#-autores)
-- [Licencia](#-licencia)
+- [Características](#características)
+- [Requisitos Previos](#requisitos-previos)
+- [Preparación y Ejecución](#preparación-y-ejecución)
+- [Dependencias](#dependencias)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [API Endpoints](#api-endpoints)
+- [Principios Aplicados](#principios-aplicados)
+- [Autores](#autores)
+- [Licencia](#licencia)
 
 ---
 
@@ -31,61 +32,143 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 - **Almacenamiento persistente** en MongoDB con metadatos completos
 - **API RESTful** construida con FastAPI y documentación automática
 - **Tests unitarios** con pytest y cobertura de código
-- **Arquitectura limpia** de 3 capas (Presentación, Aplicación, Datos)
+- **Arquitectura limpia** de 3 capas (Presentación, Lógica de Negocio, Repositorios)
 - **Generación de archivos `.txt`** con el contenido extraído
--  **Manejo de errores** robusto con excepciones personalizadas
+- **Manejo de errores** robusto con excepciones personalizadas
 
 ---
 
 ## Requisitos previos
 
-- **Python 3.13**
+- **Python 3.13+
 - **UV**
 - **Docker Engine/Docker Desktop 29.4.1**
 
 ---
 
-## Preparación
+## Preparación y Ejecución
 
-- Clonar y acceder a repositorio
+### 1. Clonar y acceder al repositorio
 
-  - **git clone https://github.com/Zindorg/pdf-extractext**
-  - **cd pdf-extractext**
+```bash
+git clone https://github.com/Zindorg/pdf-extractext
+cd pdf-extractext
+```
 
-- Descargar dependencias
+### 2. Configurar variables de entorno
 
-  - **uv sync**
-  - **uv sync --extra dev**
+Copiar el archivo de ejemplo y editar las variables necesarias:
 
-- (Opcional) Configurar permisos en docker
+```bash
+cp .env.example .env
+```
 
-  - **sudo usermod -aG docker $USER**
-  - **newgrp docker**
+Variables esenciales del archivo `.env`:
 
-- Preparar Base de Datos MongoDB
+```bash
+# Zona horaria
+TZ=America/Argentina/Mendoza
 
-  - **cp .env.example .env**
-  - **mkdir -p ~/microservicios/mongodb/data**
-  - **docker network create mired || true**
-  - **docker compose up -d**
+# Credenciales de MongoDB
+USERNAME=root
+PASSWORD=qwerty1234
+MONGO_DATA_PATH=/ruta/a/datos/mongodb
 
-- Nota para usuarios de Windows
+# URI de conexión a MongoDB
+MONGODB_URI=mongodb://root:qwerty1234@localhost:27017/?authSource=admin
+```
 
-  *En Windows se pueden usar los mismos comandos en WSL o adaptar rutas a C:\data\mongodb*
+### 3. Instalar dependencias
 
-## Ejecución
+```bash
+uv sync
+```
 
-- Iniciar aplicación
+Para desarrollo (incluye dependencias de testing):
 
-  - **uv run python main.py**
+```bash
+uv sync --extra dev
+```
 
-- Extracción de texto
+### 4. Configurar permisos en Docker (opcional)
 
-  - **curl -X POST "http://localhost:8000/pdf/upload" -F "file=@ruta-al-archivo.pdf"**
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
 
-- URL del endpoint (Buscar endpoint POST /pdf/upload)
+### 5. Levantar MongoDB
 
-  - **http://localhost:8000/docs**
+```bash
+mkdir -p ~/microservicios/mongodb/data
+docker compose -f mongodb-docker-compose.yml up -d
+```
+
+> **Nota para usuarios de Windows:** En Windows se pueden usar los mismos comandos en WSL o adaptar rutas a `C:\data\mongodb`.
+
+### 6. Ejecutar la aplicación
+
+#### Opción A: Con UV (desarrollo)
+
+```bash
+uv run python -m app.main
+```
+
+La API estará disponible en: **http://localhost:8000**
+
+Documentación interactiva: **http://localhost:8000/docs**
+
+#### Opción B: Con Docker Compose (producción)
+
+```bash
+# Build y levantar el contenedor
+docker compose -f app-docker-compose.yml up --build -d
+```
+
+El comando anterior realiza automáticamente el `build` de la imagen (`pdf-extractext:v1.0.1`) a partir del `Dockerfile` en el contexto raíz.
+
+#### Opción C: Con Docker run manual
+
+```bash
+# Build manual de la imagen
+docker build -t pdf-extractext:v1.0.1 .
+
+# Levantar contenedor
+docker run -p 8000:8000 --env-file .env pdf-extractext:v1.0.1
+```
+
+### 7. Endpoints de ejemplo (terminal)
+
+**Subir un PDF:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/pdfs" \
+  -F "file=@ruta-al-archivo.pdf"
+```
+
+**Listar todos los PDFs:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/pdfs"
+```
+
+**Obtener texto extraído:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/pdfs/{doc_id}/text"
+```
+
+**Descargar texto como .txt:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/pdfs/{doc_id}/download"
+```
+
+**Eliminar un PDF:**
+
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/pdfs/{doc_id}"
+```
 
 ---
 
@@ -123,13 +206,42 @@ Este proyecto utiliza **[uv](https://docs.astral.sh/uv/)** como gestor de paquet
 
 ---
 
+## Estructura del Proyecto
+
+El proyecto sigue una arquitectura de **3 capas** que separa claramente las responsabilidades:
+
 ### Descripción de Capas
 
 | Capa | Responsabilidad | Componentes |
 |------|----------------|-------------|
-| **Presentación** | Interfaz HTTP/API | `api/routes/`, `api/schemas/` |
-| **Aplicación** | Lógica de negocio | `services/`, `models/` |
-| **Datos** | Persistencia y adaptadores | `repositories/`, `infrastructure/` |
+| **Presentación** | Interfaz HTTP/API | `main.py`, `routes/`, `api/`, `schemas/`, `dependencies.py` |
+| **Lógica de Negocio** | Casos de uso y reglas de negocio | `use_cases/`, `services/`, `models/`, `exceptions/` |
+| **Repositorios** | Persistencia y adaptadores | `repositories/`, `infrastructure/`, `config/` |
+
+### Árbol Visual del Proyecto
+
+```
+pdf-extractext/
+├── app/                          # Capa de aplicación principal
+│   ├── api/                      # Manejadores de excepciones (Presentación)
+│   ├── config/                   # Configuración de entornos (Repositorios)
+│   ├── infrastructure/           # Extractor de PDFs, setup DB (Repositorios)
+│   ├── models/                   # Entidades de dominio (Lógica de Negocio)
+│   ├── repositories/             # Acceso a MongoDB (Repositorios)
+│   ├── routes/                   # Endpoints HTTP (Presentación)
+│   ├── schemas/                  # DTOs / Serialización (Presentación)
+│   ├── services/                 # Lógica de negocio especializada (Lógica de Negocio)
+│   ├── use_cases/                # Orquestación de casos de uso (Lógica de Negocio)
+│   ├── dependencies.py           # Inyección de dependencias (Presentación)
+│   ├── exceptions/               # Excepciones del dominio (Lógica de Negocio)
+│   └── main.py                   # Punto de entrada FastAPI (Presentación)
+├── tests/                        # Tests unitarios e integración
+├── documents/                    # Documentos de ejemplo
+├── Dockerfile                    # Build de imagen Docker
+├── app-docker-compose.yml        # Compose de la aplicación
+├── mongodb-docker-compose.yml    # Compose de MongoDB
+└── README.md                     # Este archivo
+```
 
 ---
 
@@ -139,8 +251,13 @@ La API expone los siguientes endpoints para gestionar archivos PDF:
 
 | Método | Endpoint | Descripción | Request | Response |
 |--------|----------|-------------|---------|----------|
-| `POST` | `/pdf/upload` | Subir PDF y extraer texto automáticamente | `multipart/form-data` con archivo PDF | `PDFUploadResponse` con metadatos y preview del texto |
-| `POST` | `/pdf/{file_id}/extract` | Extraer texto de páginas específicas de un PDF existente | `JSON` con `start_page` y `end_page` opcionales | `PDFExtractResponse` con texto completo |
+| `GET` | `/api/v1/pdfs` | Listar todos los PDFs persistidos | — | `PDFListResponse` |
+| `GET` | `/api/v1/pdfs/{doc_id}` | Obtener un PDF por ID | — | `PDFDetailResponse` |
+| `POST` | `/api/v1/pdfs` | Subir PDF y extraer texto automáticamente | `multipart/form-data` con archivo PDF | `PDFUploadResponse` con metadatos y preview del texto |
+| `GET` | `/api/v1/pdfs/{file_id}/text` | Obtener texto extraído de un PDF persistido | — | `PDFExtractResponse` con texto completo |
+| `GET` | `/api/v1/pdfs/{doc_id}/download` | Descargar texto extraído como archivo `.txt` | — | `text/plain` |
+| `DELETE` | `/api/v1/pdfs/{doc_id}` | Eliminar permanentemente un PDF por ID | — | `204 No Content` |
+
 ---
 
 ## Principios Aplicados
@@ -175,39 +292,15 @@ Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de softwa
 
 Proyecto desarrollado por el equipo de **PDF-Extractext** como trabajo práctico universitario.
 
-| Nombre | Rol | GitHub |
-|--------|-----|--------|
-| **Zinik Facundo** | - | [@Facundo Nahuel Zinik](https://github.com/Zindorg) |
-| **Velez Marcos** | - |[@Marcos Velez](https://github.com/marcos-velez-20) |
-| **Gonzalez Ignacio Matias** | - | [@Matias Ignacio Gonzalez](https://github.com/MatiGonza3)|
-| **Monardi Dalma** | - | [@Dalma Monardi](https://github.com/DalmaM1105) |
+| Nombre | GitHub |
+|--------|--------|
+| **Zinik Facundo** | [@Facundo Nahuel Zinik](https://github.com/Zindorg) |
+| **Velez Marcos** | [@Marcos Velez](https://github.com/marcos-velez-20) |
+| **Gonzalez Ignacio Matias** | [@Matias Ignacio Gonzalez](https://github.com/MatiGonza3) |
+| **Monardi Dalma** | [@Dalma Monardi](https://github.com/DalmaM1105) |
 
 ---
 
 ## Licencia
 
-```
-MIT License
-
-Copyright (c) 2025 Equipo PDF-Extractext
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
+Este proyecto está bajo la [Licencia MIT](LICENSE).

@@ -10,7 +10,6 @@ from app.dependencies import (
     get_delete_pdf_use_case,
     get_download_text_use_case,
     get_extract_text_use_case,
-    get_get_pdf_use_case,
     get_list_pdfs_use_case,
     get_process_pdf_use_case,
 )
@@ -21,7 +20,6 @@ from app.routes.pdf_routes import router
 from app.use_cases.delete_pdf import DeletePDF
 from app.use_cases.download_text import DownloadExtractedText
 from app.use_cases.extract_text import ExtractText
-from app.use_cases.get_pdf import GetPDF
 from app.use_cases.list_pdfs import ListPDFs
 from app.use_cases.process_pdf import ProcessPDFFile
 
@@ -67,14 +65,12 @@ def _create_test_app(mock_extraction=None, mock_queries=None, mock_commands=None
 
     # Create use cases from mocks
     list_uc = ListPDFs(mock_queries)
-    get_uc = GetPDF(mock_queries)
     extract_uc = ExtractText(mock_queries)
     delete_uc = DeletePDF(mock_commands)
     download_uc = DownloadExtractedText(mock_queries)
     process_uc = ProcessPDFFile(mock_extraction, mock_queries)
 
     app.dependency_overrides[get_list_pdfs_use_case] = lambda: list_uc
-    app.dependency_overrides[get_get_pdf_use_case] = lambda: get_uc
     app.dependency_overrides[get_extract_text_use_case] = lambda: extract_uc
     app.dependency_overrides[get_delete_pdf_use_case] = lambda: delete_uc
     app.dependency_overrides[get_download_text_use_case] = lambda: download_uc

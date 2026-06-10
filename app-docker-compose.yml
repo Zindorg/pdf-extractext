@@ -1,9 +1,6 @@
 services:
   app:
-    image: pdf-extractext:v1.0.1
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: pdf-extractext:v${VERSION}
     container_name: app
     ports:
       - 8000:8000
@@ -11,7 +8,7 @@ services:
       - mired
     environment:
       - TZ=${TZ}
-      - MONGODB_URI=mongodb://${USERNAME}:${PASSWORD}@mongodb:27017/?authSource=admin
+      - MONGODB_URI=${MONGODB_URI}
       - USERNAME=${USERNAME}
       - PASSWORD=${PASSWORD}
       - MONGO_DATA_PATH=${MONGO_DATA_PATH}

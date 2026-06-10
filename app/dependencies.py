@@ -14,7 +14,6 @@ from app.services.pdf_queries import PDFQueries
 from app.use_cases.delete_pdf import DeletePDF
 from app.use_cases.download_text import DownloadExtractedText
 from app.use_cases.extract_text import ExtractText
-from app.use_cases.get_pdf import GetPDF
 from app.use_cases.list_pdfs import ListPDFs
 from app.use_cases.process_pdf import ProcessPDFFile
 
@@ -55,11 +54,6 @@ def get_pdf_commands(repository=Depends(get_pdf_repository)):
 def get_list_pdfs_use_case(queries=Depends(get_pdf_queries)):
     """Inject ListPDFs use case."""
     return ListPDFs(queries)
-
-
-def get_get_pdf_use_case(queries=Depends(get_pdf_queries)):
-    """Inject GetPDF use case."""
-    return GetPDF(queries)
 
 
 def get_extract_text_use_case(queries=Depends(get_pdf_queries)):

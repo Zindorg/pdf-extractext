@@ -32,8 +32,13 @@ class TestProcessPdfFile:
         use_case = ProcessPDFFile(mock_extraction, mock_queries)
         result = await use_case.execute(b"pdf content", "test.pdf")
 
-        assert result == doc
-        assert result.filename == "test.pdf"
+        assert result["filename"] == "test.pdf"
+        assert result["page_count"] == 5
+        assert result["file_size"] == 1024
+        assert result["text_preview"] == "Extracted text"
+        assert result["checksum"] == "abc123"
+        assert result["is_duplicate"] is False
+        assert result["id"] is not None
 
     """Procesar un PDF vacio lanza exception."""
 

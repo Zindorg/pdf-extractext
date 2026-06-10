@@ -101,6 +101,7 @@ newgrp docker
 
 ```bash
 mkdir -p ~/microservicios/mongodb/data
+docker network create mired || true
 docker compose -f mongodb-docker-compose.yml up -d
 ```
 
@@ -108,33 +109,10 @@ docker compose -f mongodb-docker-compose.yml up -d
 
 ### 6. Ejecutar la aplicación
 
-#### Opción A: Con UV (desarrollo)
-
 ```bash
-uv run python -m app.main
-```
+docker build -t pdf-extractext:v1.0.2.
 
-La API estará disponible en: **http://localhost:8000**
-
-Documentación interactiva: **http://localhost:8000/docs**
-
-#### Opción B: Con Docker Compose (producción)
-
-```bash
-# Build y levantar el contenedor
-docker compose -f app-docker-compose.yml up --build -d
-```
-
-El comando anterior realiza automáticamente el `build` de la imagen (`pdf-extractext:v1.0.1`) a partir del `Dockerfile` en el contexto raíz.
-
-#### Opción C: Con Docker run manual
-
-```bash
-# Build manual de la imagen
-docker build -t pdf-extractext:v1.0.1 .
-
-# Levantar contenedor
-docker run -p 8000:8000 --env-file .env pdf-extractext:v1.0.1
+docker run -p 8000:8000 --env-file .env pdf-extractext:v1.0.2
 ```
 
 ### 7. Endpoints de ejemplo (terminal)
@@ -252,7 +230,6 @@ La API expone los siguientes endpoints para gestionar archivos PDF:
 | Método | Endpoint | Descripción | Request | Response |
 |--------|----------|-------------|---------|----------|
 | `GET` | `/api/v1/pdfs` | Listar todos los PDFs persistidos | — | `PDFListResponse` |
-| `GET` | `/api/v1/pdfs/{doc_id}` | Obtener un PDF por ID | — | `PDFDetailResponse` |
 | `POST` | `/api/v1/pdfs` | Subir PDF y extraer texto automáticamente | `multipart/form-data` con archivo PDF | `PDFUploadResponse` con metadatos y preview del texto |
 | `GET` | `/api/v1/pdfs/{file_id}/text` | Obtener texto extraído de un PDF persistido | — | `PDFExtractResponse` con texto completo |
 | `GET` | `/api/v1/pdfs/{doc_id}/download` | Descargar texto extraído como archivo `.txt` | — | `text/plain` |

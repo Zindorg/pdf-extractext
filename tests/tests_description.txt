@@ -40,7 +40,6 @@ Archivos relevantes:
 - `api/test_upload_rejects_empty.py`: rechazo de archivos vacíos.
 - `api/test_upload_rejects_non_pdf.py`: rechazo de archivos no-PDF.
 - `api/test_list_pdfs_endpoint.py`: listado de documentos.
-- `api/test_get_pdf_endpoint.py`: obtención de documento por ID.
 - `api/test_extract_text_endpoint.py`: extracción de texto.
 - `api/test_download_pdf_text_endpoint.py`: descarga de texto.
 - `api/test_delete_pdf_endpoint.py`: eliminación de documentos.

@@ -29,21 +29,6 @@ class PDFListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class PDFDetailResponse(BaseModel):
-    """Response for single PDF with full text."""
-
-    id: str
-    filename: str
-    page_count: int
-    file_size: int
-    checksum: str
-    text_content: str
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class PDFUploadResponse(BaseModel):
     """Response for PDF upload."""
 

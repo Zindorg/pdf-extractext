@@ -11,6 +11,8 @@ services:
       - MONGO_INITDB_USERNAME=${USERNAME}
       - MONGO_INITDB_PASSWORD=${PASSWORD}
     volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
       - ${MONGO_DATA_PATH}:/data/db
 
 networks:

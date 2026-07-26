@@ -8,7 +8,6 @@ class Settings(BaseSettings):
 
     app_name: str = "PDF Extractext"
     debug: bool = False
-    upload_dir: str = "./uploads"
     max_file_size: int = 10 * 1024 * 1024
     mongodb_uri: str = "mongodb://root:qwerty1234@localhost:27017?authSource=admin"
     mongodb_database: str = "pdf_extractext"

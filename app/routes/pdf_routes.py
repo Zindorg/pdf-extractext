@@ -1,5 +1,7 @@
 """FastAPI routes for PDF operations."""
 
+import logging
+
 from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 
@@ -22,6 +24,8 @@ from app.use_cases.extract_text import ExtractText
 from app.use_cases.list_pdfs import ListPDFs
 from app.use_cases.process_pdf import ProcessPDFFile
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/pdfs", tags=["PDF"])
 
 
@@ -35,6 +39,7 @@ def list_pdfs(use_case: ListPDFs = Depends(get_list_pdfs_use_case)) -> PDFListRe
     Returns:
         List of all PDF documents with metadata.
     """
+    logger.info("GET /pdfs — listing all documents")
     return use_case.execute()
 
 
@@ -51,8 +56,10 @@ async def upload_pdf(
     Returns:
         Upload response with persisted document metadata.
     """
+    logger.info("POST /pdfs — uploading file: %s", file.filename)
     content = await file.read()
     result = await use_case.execute(content, file.filename)
+    logger.info("File uploaded successfully: %s (id: %s)", file.filename, result["id"])
     return PDFUploadResponse(**result)
 
 
@@ -70,6 +77,7 @@ def get_text(
     Returns:
         Extracted text response.
     """
+    logger.info("GET /pdfs/%s/text — retrieving text", file_id)
     return use_case.execute(file_id)
 
 
@@ -89,6 +97,7 @@ def download_pdf_text(
     Returns:
         StreamingResponse with text/plain content disposition.
     """
+    logger.info("GET /pdfs/%s/download — downloading text", doc_id)
     doc = use_case.execute(doc_id)
     download_filename = (
         doc.filename.replace(".pdf", ".txt") if doc.filename.endswith(".pdf") else f"{doc.filename}.txt"
@@ -112,7 +121,9 @@ def delete_pdf(
     Args:
         doc_id: Document ID.
         use_case: Injected DeletePDF use case.
+
     """
+    logger.info("DELETE /pdfs/%s — deleting document", doc_id)
     deleted = use_case.execute(doc_id)
     if not deleted:
         raise PDFNotFoundException(detail=f"Document not found: {doc_id}")

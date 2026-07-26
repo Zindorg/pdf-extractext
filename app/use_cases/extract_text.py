@@ -1,7 +1,11 @@
 """Use case for extracting text from a persisted PDF document."""
 
+import logging
+
 from app.schemas.pdf_schemas import PDFExtractResponse
 from app.services.pdf_queries import PDFQueries
+
+logger = logging.getLogger(__name__)
 
 
 class ExtractText:
@@ -24,6 +28,7 @@ class ExtractText:
         Returns:
             PDFExtractResponse with extracted text.
         """
+        logger.debug("Retrieving text for document: %s", file_id)
         doc = self._queries.get_persisted_document(file_id)
 
         return PDFExtractResponse(

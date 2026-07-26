@@ -8,10 +8,9 @@ services:
       - mired
     environment:
       - TZ=${TZ}
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
       - MONGODB_URI=${MONGODB_URI}
-      - USERNAME=${USERNAME}
-      - PASSWORD=${PASSWORD}
-      - MONGO_DATA_PATH=${MONGO_DATA_PATH}
 
 networks:
   mired:

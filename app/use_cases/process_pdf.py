@@ -1,9 +1,12 @@
 """Use case for processing PDF upload and persisting text to MongoDB."""
 
+import logging
 from typing import Any
 
 from app.services.pdf_extraction import PDFExtraction
 from app.services.pdf_queries import PDFQueries
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessPDFFile:
@@ -21,6 +24,7 @@ class ProcessPDFFile:
 
     async def execute(self, file_content: bytes, filename: str) -> dict[str, Any]:
         """Process PDF file, extract text, persist to database, and return DTO."""
+        logger.debug("Processing uploaded file: %s", filename)
         document = await self._extraction.process_pdf(file_content, filename)
 
         return {

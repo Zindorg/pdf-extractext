@@ -1,5 +1,6 @@
 """Main application entry point with MongoDB configuration."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -7,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 
 from app.api.exception_handlers import pdf_exception_handlers
+from app.config.logging_config import setup_logging
 from app.config.settings import settings
 from app.infrastructure.database_setup import setup_database
 from app.routes import pdf_routes
@@ -15,6 +17,7 @@ from app.routes import pdf_routes
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     """Manage application lifecycle: startup and shutdown."""
+    setup_logging(level=logging.DEBUG if settings.debug else logging.INFO)
     client = MongoClient(settings.mongodb_uri)
     database = client[settings.mongodb_database]
     application.state.mongodb_client = client

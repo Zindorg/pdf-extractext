@@ -1,10 +1,13 @@
 """Use case for listing all PDF documents."""
 
+import logging
 from typing import List
 
 from app.models.pdf_document import PDFDocument
 from app.schemas.pdf_schemas import PDFDocumentResponse, PDFListResponse
 from app.services.pdf_queries import PDFQueries
+
+logger = logging.getLogger(__name__)
 
 
 class ListPDFs:
@@ -24,6 +27,7 @@ class ListPDFs:
         Returns:
             PDFListResponse with list of documents and total count.
         """
+        logger.debug("Listing all PDF documents")
         documents: List[PDFDocument] = self._queries.find_all()
 
         doc_responses = [
@@ -39,4 +43,5 @@ class ListPDFs:
             for doc in documents
         ]
 
+        logger.debug("Found %d PDF documents", len(doc_responses))
         return PDFListResponse(documents=doc_responses, total=len(doc_responses))

@@ -57,26 +57,32 @@ cd pdf-extractext
 
 ### 2. Configurar variables de entorno
 
-Copiar el archivo de ejemplo y editar las variables necesarias:
-
+#### Para ejecución directa (uvicorn)
+Copiar el archivo de ejemplo:
 ```bash
 cp .env.example .env
 ```
 
-Variables esenciales del archivo `.env`:
+Variables disponibles:
+- `APP_NAME` — Nombre de la aplicación (default: `PDF Extractext`)
+- `DEBUG` — Modo debug (`True`/`False`, default: `False`)
+- `MAX_FILE_SIZE` — Tamaño máximo de archivo en bytes (default: `10485760`)
+- `MONGODB_DATABASE` — Nombre de la base de datos (default: `pdf_extractext`)
+- `MONGODB_URI` — URI de conexión a MongoDB (default: `mongodb://root:qwerty1234@localhost:27017/?authSource=admin`)
 
-```bash
-# Zona horaria
-TZ=America/Argentina/Mendoza
+#### Para ejecución con Docker
+Las variables necesarias para los docker-compose se declaran en un archivo `.env` dentro de cada directorio o se pasan inline:
 
-# Credenciales de MongoDB
-USERNAME=root
-PASSWORD=qwerty1234
-MONGO_DATA_PATH=/ruta/a/datos/mongodb
+**docker/mongodb/docker-compose.yml** requiere:
+- `TZ` — Zona horaria (ej: `America/Argentina/Mendoza`)
+- `USERNAME` — Usuario de MongoDB (ej: `root`)
+- `PASSWORD` — Contraseña de MongoDB (ej: `qwerty1234`)
+- `MONGO_DATA_PATH` — Ruta local para persistencia (ej: `~/microservicios/mongodb/data`)
 
-# URI de conexión a MongoDB
-MONGODB_URI=mongodb://root:qwerty1234@localhost:27017/?authSource=admin
-```
+**docker/app/docker-compose.yml** requiere:
+- `TZ` — Zona horaria
+- `VERSION` — Tag de la imagen Docker (ej: `1.0.3`)
+- `MONGODB_URI` — URI para conexión entre contenedores (ej: `mongodb://root:qwerty1234@mongodb:27017/?authSource=admin`)
 
 ### 3. Instalar dependencias
 
@@ -102,7 +108,8 @@ newgrp docker
 ```bash
 mkdir -p ~/microservicios/mongodb/data
 docker network create mired || true
-docker compose -f mongodb-docker-compose.yml up -d
+cp docker/mongodb/.env.example docker/mongodb/.env
+docker compose -f docker/mongodb/docker-compose.yml up -d
 ```
 
 > **Nota para usuarios de Windows:** En Windows se pueden usar los mismos comandos en WSL o adaptar rutas a `C:\data\mongodb`.
@@ -110,9 +117,10 @@ docker compose -f mongodb-docker-compose.yml up -d
 ### 6. Ejecutar la aplicación
 
 ```bash
-docker build -t pdf-extractext:v1.0.2.
+cp docker/app/.env.example docker/app/.env
+docker build -t pdf-extractext:v$(grep VERSION docker/app/.env | cut -d= -f2) .
 
-docker run -p 8000:8000 --env-file .env pdf-extractext:v1.0.2
+docker compose -f docker/app/docker-compose.yml up -d
 ```
 
 ### 7. Endpoints de ejemplo (terminal)
@@ -215,9 +223,14 @@ pdf-extractext/
 │   └── main.py                   # Punto de entrada FastAPI (Presentación)
 ├── tests/                        # Tests unitarios e integración
 ├── documents/                    # Documentos de ejemplo
+├── docker/                       # Archivos de Docker Compose
+│   ├── app/
+│   │   ├── .env.example
+│   │   └── docker-compose.yml
+│   └── mongodb/
+│       ├── .env.example
+│       └── docker-compose.yml
 ├── Dockerfile                    # Build de imagen Docker
-├── app-docker-compose.yml        # Compose de la aplicación
-├── mongodb-docker-compose.yml    # Compose de MongoDB
 └── README.md                     # Este archivo
 ```
 

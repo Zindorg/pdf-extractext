@@ -1,8 +1,12 @@
 """Database setup and index configuration for MongoDB."""
 
+import logging
+
 from pymongo import ASCENDING, DESCENDING
 from pymongo.collection import Collection
 from pymongo.database import Database
+
+logger = logging.getLogger(__name__)
 
 
 def create_indexes(db: Database) -> None:
@@ -28,8 +32,11 @@ def create_indexes(db: Database) -> None:
         name="idx_created_at_desc",
     )
 
+    logger.info("Database indexes created successfully")
+
 
 def setup_database(db: Database) -> Database:
     """Initialize database with proper configuration."""
+    logger.info("Setting up database")
     create_indexes(db)
     return db

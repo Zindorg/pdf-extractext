@@ -1,11 +1,15 @@
 """Global exception handlers for FastAPI."""
 
+import logging
+
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.exceptions import PDFExtractextException
 from app.exceptions.problem_detail import ProblemDetail
+
+logger = logging.getLogger(__name__)
 
 
 def _build_problem_detail(
@@ -25,6 +29,7 @@ async def pdf_extractext_exception_handler(
     request: Request, exc: PDFExtractextException
 ) -> JSONResponse:
     """Handle generic PDF application exceptions."""
+    logger.error("Application exception: %s (status=%d)", exc, exc.status)
     return _build_problem_detail(
         title=exc.title,
         detail=str(exc),
@@ -46,6 +51,7 @@ async def request_validation_exception_handler(
             parts.append(f"{loc}: {msg}")
         detail_msg = "; ".join(parts)
 
+    logger.warning("Validation error: %s", detail_msg)
     return _build_problem_detail(
         title="Unprocessable Entity",
         detail=detail_msg,

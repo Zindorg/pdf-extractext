@@ -91,11 +91,8 @@ Las variables necesarias para los docker-compose se declaran en un archivo `.env
 uv sync
 ```
 
-Para desarrollo (incluye dependencias de testing):
-
-```bash
-uv sync --extra dev
-```
+`uv sync` instala también el grupo `dev` (pytest, httpx, reportlab, mongomock).
+Para instalar solo lo necesario en producción: `uv sync --no-dev`.
 
 Ejecutar los tests:
 

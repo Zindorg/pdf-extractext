@@ -10,7 +10,7 @@ import hashlib
 import logging
 from pathlib import Path
 
-from app.exceptions import InvalidFileException
+from app.domain.exceptions import InvalidFileException
 
 logger = logging.getLogger(__name__)
 

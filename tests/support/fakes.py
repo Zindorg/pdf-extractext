@@ -15,7 +15,7 @@ from bson import ObjectId
 
 from app.domain.pdf_document import PDFDocument
 from app.domain.ports import ExtractedText, PDFRepository, PDFTextExtractor
-from app.exceptions import DuplicateDocumentException, PDFExtractionException
+from app.domain.exceptions import DuplicateDocumentException, PDFExtractionException
 
 
 class InMemoryPDFRepository(PDFRepository):

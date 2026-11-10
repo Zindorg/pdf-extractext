@@ -3,7 +3,7 @@
 import logging
 
 from app.domain.ports import PDFRepository
-from app.exceptions import PDFNotFoundException
+from app.domain.exceptions import PDFNotFoundException
 
 logger = logging.getLogger(__name__)
 

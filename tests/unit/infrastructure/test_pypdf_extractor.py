@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.exceptions import PDFExtractionException
+from app.domain.exceptions import PDFExtractionException
 from app.infrastructure.pypdf_extractor import PypdfTextExtractor
 from tests.support.pdf_builder import build_pdf
 

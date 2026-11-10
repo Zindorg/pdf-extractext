@@ -2,7 +2,7 @@
 
 from app.domain.pdf_document import PDFDocument
 from app.domain.ports import PDFRepository
-from app.exceptions import PDFNotFoundException
+from app.domain.exceptions import PDFNotFoundException
 
 
 class GetPDF:

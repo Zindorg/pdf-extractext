@@ -10,7 +10,7 @@ from app.domain.pdf_rules import (
     validate_size,
 )
 from app.domain.ports import PDFRepository, PDFTextExtractor
-from app.exceptions import DuplicateDocumentException, PDFExtractionException
+from app.domain.exceptions import DuplicateDocumentException, PDFExtractionException
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,8 @@
-"""Global exception handlers for FastAPI."""
+"""Translate domain errors into RFC 9457 HTTP responses.
+
+This is the only place that knows which HTTP status corresponds to each
+domain error, so the domain stays free of HTTP concerns.
+"""
 
 import logging
 
@@ -6,66 +10,58 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.exceptions import PDFExtractextException
-from app.exceptions.problem_detail import ProblemDetail
+from app.api.problem_detail import ProblemDetail
+from app.domain.exceptions import (
+    DuplicateDocumentException,
+    InvalidFileException,
+    PDFExtractextException,
+    PDFExtractionException,
+    PDFNotFoundException,
+)
 
 logger = logging.getLogger(__name__)
 
+NOT_FOUND = (404, "Not Found")
+CONFLICT = (409, "Conflict")
+UNPROCESSABLE = (422, "Unprocessable Entity")
+SERVER_ERROR = (500, "Internal Server Error")
 
-def _build_problem_detail(
-    *, title: str, detail: str, status: int, request: Request
-) -> JSONResponse:
-    """Build a standardized RFC 9457 error response."""
-    problem = ProblemDetail(
-        title=title,
-        detail=detail,
-        status=status,
-        instance=str(request.url),
-    )
-    return JSONResponse(status_code=status, content=problem.to_dict())
+# Any domain error not listed here (e.g. RepositoryException) is a 500.
+_HTTP_ERRORS: dict[type[PDFExtractextException], tuple[int, str]] = {
+    PDFNotFoundException: NOT_FOUND,
+    DuplicateDocumentException: CONFLICT,
+    InvalidFileException: UNPROCESSABLE,
+    PDFExtractionException: UNPROCESSABLE,
+}
 
 
-async def pdf_extractext_exception_handler(
-    request: Request, exc: PDFExtractextException
-) -> JSONResponse:
-    """Handle generic PDF application exceptions."""
-    if exc.status >= 500:
+def _problem(request: Request, status: int, title: str, detail: str) -> JSONResponse:
+    problem = ProblemDetail(title=title, status=status, detail=detail, instance=str(request.url))
+    return JSONResponse(status_code=status, content=problem.model_dump())
+
+
+async def domain_exception_handler(request: Request, exc: PDFExtractextException) -> JSONResponse:
+    status, title = _HTTP_ERRORS.get(type(exc), SERVER_ERROR)
+    if status >= 500:
         # Traza completa (incluida la causa del driver) solo en el log.
         logger.error("Server error: %s", exc, exc_info=exc)
     else:
-        logger.info("Client error: %s (status=%d)", exc, exc.status)
-    return _build_problem_detail(
-        title=exc.title,
-        detail=str(exc),
-        status=exc.status,
-        request=request,
-    )
+        logger.info("Client error: %s (status=%d)", exc, status)
+    return _problem(request, status, title, str(exc))
 
 
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    """Handle FastAPI validation errors (422)."""
-    detail_msg = "Validation error"
-    if exc.errors():
-        parts = []
-        for err in exc.errors():
-            loc = ".".join(str(part) for part in err.get("loc", []))
-            msg = err.get("msg", "")
-            parts.append(f"{loc}: {msg}")
-        detail_msg = "; ".join(parts)
-
-    logger.warning("Validation error: %s", detail_msg)
-    return _build_problem_detail(
-        title="Unprocessable Entity",
-        detail=detail_msg,
-        status=422,
-        request=request,
-    )
+    detail = "; ".join(
+        f"{'.'.join(str(part) for part in err.get('loc', []))}: {err.get('msg', '')}"
+        for err in exc.errors()
+    ) or "Validation error"
+    logger.info("Validation error: %s", detail)
+    return _problem(request, *UNPROCESSABLE, detail)
 
 
-# Convenience export for registration
 pdf_exception_handlers = {
-    PDFExtractextException: pdf_extractext_exception_handler,
+    PDFExtractextException: domain_exception_handler,
     RequestValidationError: request_validation_exception_handler,
 }

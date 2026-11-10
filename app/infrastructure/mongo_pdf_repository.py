@@ -11,7 +11,7 @@ from pymongo.errors import DuplicateKeyError, PyMongoError
 
 from app.domain.pdf_document import PDFDocument
 from app.domain.ports import PDFRepository
-from app.exceptions import DuplicateDocumentException, RepositoryException
+from app.domain.exceptions import DuplicateDocumentException, RepositoryException
 
 logger = logging.getLogger(__name__)
 

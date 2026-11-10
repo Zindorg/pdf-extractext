@@ -4,7 +4,7 @@ import hashlib
 
 import pytest
 
-from app.exceptions import (
+from app.domain.exceptions import (
     DuplicateDocumentException,
     InvalidFileException,
     PDFExtractionException,

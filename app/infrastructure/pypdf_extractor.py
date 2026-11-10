@@ -6,7 +6,7 @@ from io import BytesIO
 from pypdf import PdfReader
 
 from app.domain.ports import ExtractedText, PDFTextExtractor
-from app.exceptions import PDFExtractionException
+from app.domain.exceptions import PDFExtractionException
 
 logger = logging.getLogger(__name__)
 

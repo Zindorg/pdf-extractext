@@ -6,7 +6,7 @@ import mongomock
 import pytest
 from pymongo.errors import PyMongoError
 
-from app.exceptions import DuplicateDocumentException, RepositoryException
+from app.domain.exceptions import DuplicateDocumentException, RepositoryException
 from app.infrastructure.database_setup import setup_database
 from app.infrastructure.mongo_pdf_repository import MongoPDFRepository
 from tests.unit.factories import make_pdf_document

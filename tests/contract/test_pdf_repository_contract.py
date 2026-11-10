@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.exceptions import DuplicateDocumentException
+from app.domain.exceptions import DuplicateDocumentException
 from tests.unit.factories import make_pdf_document
 
 VALID_UNKNOWN_ID = "507f1f77bcf86cd799439011"

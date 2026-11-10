@@ -10,7 +10,7 @@ from app.domain.pdf_rules import (
     validate_filename,
     validate_size,
 )
-from app.exceptions import InvalidFileException
+from app.domain.exceptions import InvalidFileException
 
 
 class TestValidateFilename:

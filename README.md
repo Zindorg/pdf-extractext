@@ -5,7 +5,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248.svg?logo=mongodb)](https://www.mongodb.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Extractor de texto de PDFs con arquitectura de 3 capas y API REST.**
+**Extractor de texto de PDFs con API REST, arquitectura en capas y puertos/adaptadores.**
 
 Permite subir archivos PDF, extraer su contenido textual y gestionar los documentos mediante una API RESTful construida con FastAPI.
 
@@ -28,13 +28,14 @@ Permite subir archivos PDF, extraer su contenido textual y gestionar los documen
 ## Características
 
 - **Extracción de texto** de PDFs con soporte multi-página
-- **Validación automática** de archivos (formato, tamaño, contenido no vacío)
+- **Validación automática** de archivos (extensión, tamaño máximo, contenido no vacío, PDF legible y con texto)
+- **Deduplicación** por checksum SHA-256 (un PDF repetido responde `409 Conflict`)
 - **Almacenamiento persistente** en MongoDB con metadatos completos
 - **API RESTful** construida con FastAPI y documentación automática
-- **Tests unitarios** con pytest y cobertura de código
-- **Arquitectura limpia** de 3 capas (Presentación, Lógica de Negocio, Repositorios)
+- **Tests** con pytest: contrato HTTP, casos de uso con fakes y contrato del repositorio contra MongoDB
+- **Arquitectura en capas** con puertos y adaptadores para persistencia y extracción (ver [`CONTEXT.md`](CONTEXT.md))
 - **Generación de archivos `.txt`** con el contenido extraído
-- **Manejo de errores** robusto con excepciones personalizadas
+- **Errores** en formato RFC 9457 (Problem Details)
 
 ---
 
@@ -95,6 +96,15 @@ Para desarrollo (incluye dependencias de testing):
 ```bash
 uv sync --extra dev
 ```
+
+Ejecutar los tests:
+
+```bash
+uv run pytest                      # toda la suite; los tests contra MongoDB se omiten si no hay servidor
+uv run pytest -m "not integration" # solo los que no necesitan MongoDB
+```
+
+Los tests de integración usan la base `<MONGODB_DATABASE>_test` y la eliminan al terminar.
 
 ### 4. Configurar permisos en Docker (opcional)
 
@@ -182,56 +192,53 @@ Este proyecto utiliza **[uv](https://docs.astral.sh/uv/)** como gestor de paquet
 | `pytest` | >=9.0.3 | Framework de testing |
 | `pytest-asyncio` | >=1.3.0 | Soporte para tests asíncronos |
 | `pytest-cov` | >=7.1.0 | Medición de cobertura de código |
-| `httpx` | >=0.28.1 | Cliente HTTP para tests de integración |
-
-### Desarrollo (opcional)
-
-| Dependencia | Versión | Uso |
-|-------------|---------|-----|
-| `reportlab` | >=4.5.0 | Generación y manipulación de archivos PDF |
+| `httpx` | >=0.28.1 | Cliente HTTP de `TestClient` |
+| `reportlab` | >=4.5.0 | Genera PDFs reales en memoria para los tests |
+| `mongomock` | >=4.3.0 | MongoDB en memoria para el test de contrato del repositorio |
 
 ---
 
 ## Estructura del Proyecto
 
-El proyecto sigue una arquitectura de **3 capas** que separa claramente las responsabilidades:
+Arquitectura **en capas** con **puertos y adaptadores** en los bordes de salida
+(persistencia y extracción de texto). El dominio y los casos de uso no conocen
+FastAPI, MongoDB, pypdf ni la configuración: todo se cablea en `app/dependencies.py`.
+Las decisiones y los seams de testing están documentados en [`CONTEXT.md`](CONTEXT.md).
 
 ### Descripción de Capas
 
 | Capa | Responsabilidad | Componentes |
 |------|----------------|-------------|
-| **Presentación** | Interfaz HTTP/API | `main.py`, `routes/`, `api/`, `schemas/`, `dependencies.py` |
-| **Lógica de Negocio** | Casos de uso y reglas de negocio | `use_cases/`, `services/`, `models/`, `exceptions/` |
-| **Repositorios** | Persistencia y adaptadores | `repositories/`, `infrastructure/`, `config/` |
+| **Presentación** | Interfaz HTTP, DTOs, errores RFC 9457 | `main.py`, `routes/`, `schemas/`, `api/` |
+| **Composition root** | Instancia adaptadores e inyecta configuración | `dependencies.py`, `config/` |
+| **Casos de uso** | Una clase por operación | `use_cases/` (`UploadPDF`, `ListPDFs`, `GetPDF`, `DeletePDF`) |
+| **Dominio** | Entidad, reglas puras y puertos | `domain/` (`PDFDocument`, `pdf_rules`, `PDFRepository`, `PDFTextExtractor`), `exceptions/` |
+| **Infraestructura** | Adaptadores de los puertos | `infrastructure/` (`MongoPDFRepository`, `PypdfTextExtractor`, `database_setup`) |
 
 ### Árbol Visual del Proyecto
 
 ```
 pdf-extractext/
-├── app/                          # Capa de aplicación principal
-│   ├── api/                      # Manejadores de excepciones (Presentación)
-│   ├── config/                   # Configuración de entornos (Repositorios)
-│   ├── infrastructure/           # Extractor de PDFs, setup DB (Repositorios)
-│   ├── models/                   # Entidades de dominio (Lógica de Negocio)
-│   ├── repositories/             # Acceso a MongoDB (Repositorios)
-│   ├── routes/                   # Endpoints HTTP (Presentación)
-│   ├── schemas/                  # DTOs / Serialización (Presentación)
-│   ├── services/                 # Lógica de negocio especializada (Lógica de Negocio)
-│   ├── use_cases/                # Orquestación de casos de uso (Lógica de Negocio)
-│   ├── dependencies.py           # Inyección de dependencias (Presentación)
-│   ├── exceptions/               # Excepciones del dominio (Lógica de Negocio)
-│   └── main.py                   # Punto de entrada FastAPI (Presentación)
-├── tests/                        # Tests unitarios e integración
-├── documents/                    # Documentos de ejemplo
-├── docker/                       # Archivos de Docker Compose
-│   ├── app/
-│   │   ├── .env.example
-│   │   └── docker-compose.yml
-│   └── mongodb/
-│       ├── .env.example
-│       └── docker-compose.yml
-├── Dockerfile                    # Build de imagen Docker
-└── README.md                     # Este archivo
+├── app/
+│   ├── main.py                   # Punto de entrada FastAPI + lifespan (conexión a MongoDB)
+│   ├── dependencies.py           # Composition root: cablea adaptadores y settings
+│   ├── routes/                   # Endpoints HTTP
+│   ├── schemas/                  # DTOs (mapeo desde la entidad con from_document)
+│   ├── api/                      # Manejadores de excepciones RFC 9457
+│   ├── use_cases/                # upload_pdf, list_pdfs, get_pdf, delete_pdf
+│   ├── domain/                   # pdf_document, pdf_rules, ports
+│   ├── infrastructure/           # mongo_pdf_repository, pypdf_extractor, database_setup
+│   ├── exceptions/               # Excepciones de la aplicación
+│   └── config/                   # Settings (pydantic-settings) y logging
+├── tests/
+│   ├── unit/                     # api (HTTP), use_cases, domain, infrastructure
+│   ├── contract/                 # Contrato de PDFRepository: fake, mongomock y MongoDB real
+│   └── support/                  # Fakes en memoria y generador de PDFs
+├── documents/                    # Diagramas PlantUML de paquetes y clases
+├── docker/                       # Docker Compose de la app y de MongoDB
+├── CONTEXT.md                    # Decisiones de arquitectura y seams de testing
+├── Dockerfile
+└── README.md
 ```
 
 ---
@@ -243,7 +250,7 @@ La API expone los siguientes endpoints para gestionar archivos PDF:
 | Método | Endpoint | Descripción | Request | Response |
 |--------|----------|-------------|---------|----------|
 | `GET` | `/api/v1/pdfs` | Listar todos los PDFs persistidos | — | `PDFListResponse` |
-| `POST` | `/api/v1/pdfs` | Subir PDF y extraer texto automáticamente | `multipart/form-data` con archivo PDF | `PDFUploadResponse` con metadatos y preview del texto |
+| `POST` | `/api/v1/pdfs` | Subir PDF y extraer texto automáticamente (`409` si ya existe, `422` si es inválido, demasiado grande o sin texto) | `multipart/form-data` con archivo PDF | `PDFUploadResponse` con metadatos y preview del texto |
 | `GET` | `/api/v1/pdfs/{file_id}/text` | Obtener texto extraído de un PDF persistido | — | `PDFExtractResponse` con texto completo |
 | `GET` | `/api/v1/pdfs/{doc_id}/download` | Descargar texto extraído como archivo `.txt` | — | `text/plain` |
 | `DELETE` | `/api/v1/pdfs/{doc_id}` | Eliminar permanentemente un PDF por ID | — | `204 No Content` |
@@ -274,7 +281,7 @@ Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de softwa
 
 ### Arquitectura
 
-- **Clean Architecture** - Separación clara de responsabilidades
+- **Arquitectura en capas con puertos y adaptadores** - el dominio y los casos de uso dependen de abstracciones (`PDFRepository`, `PDFTextExtractor`); MongoDB y pypdf son adaptadores intercambiables cableados en el composition root
 
 ---
 

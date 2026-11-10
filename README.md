@@ -206,10 +206,10 @@ Las decisiones y los seams de testing están documentados en [`CONTEXT.md`](CONT
 
 | Capa | Responsabilidad | Componentes |
 |------|----------------|-------------|
-| **Presentación** | Interfaz HTTP, DTOs, errores RFC 9457 | `main.py`, `routes/`, `schemas/`, `api/` |
+| **Presentación** | Interfaz HTTP, DTOs, traducción de errores del dominio a RFC 9457 | `main.py`, `routes/`, `schemas/`, `api/` |
 | **Composition root** | Instancia adaptadores e inyecta configuración | `dependencies.py`, `config/` |
 | **Casos de uso** | Una clase por operación | `use_cases/` (`UploadPDF`, `ListPDFs`, `GetPDF`, `DeletePDF`) |
-| **Dominio** | Entidad, reglas puras y puertos | `domain/` (`PDFDocument`, `pdf_rules`, `PDFRepository`, `PDFTextExtractor`), `exceptions/` |
+| **Dominio** | Entidad, value object, puertos y errores | `domain/` (`PDFDocument`, `UploadedFile`, `PDFReader`, `PDFWriter`, `PDFTextExtractor`, `exceptions`) |
 | **Infraestructura** | Adaptadores de los puertos | `infrastructure/` (`MongoPDFRepository`, `PypdfTextExtractor`, `database_setup`) |
 
 ### Árbol Visual del Proyecto
@@ -221,15 +221,14 @@ pdf-extractext/
 │   ├── dependencies.py           # Composition root: cablea adaptadores y settings
 │   ├── routes/                   # Endpoints HTTP
 │   ├── schemas/                  # DTOs (mapeo desde la entidad con from_document)
-│   ├── api/                      # Manejadores de excepciones RFC 9457
+│   ├── api/                      # Errores del dominio -> HTTP (RFC 9457)
 │   ├── use_cases/                # upload_pdf, list_pdfs, get_pdf, delete_pdf
-│   ├── domain/                   # pdf_document, pdf_rules, ports
+│   ├── domain/                   # pdf_document, uploaded_file, ports, exceptions
 │   ├── infrastructure/           # mongo_pdf_repository, pypdf_extractor, database_setup
-│   ├── exceptions/               # Excepciones de la aplicación
 │   └── config/                   # Settings (pydantic-settings) y logging
 ├── tests/
 │   ├── unit/                     # api (HTTP), use_cases, domain, infrastructure
-│   ├── contract/                 # Contrato de PDFRepository: fake, mongomock y MongoDB real
+│   ├── contract/                 # Contrato del repositorio: fake, mongomock y MongoDB real
 │   └── support/                  # Fakes en memoria y generador de PDFs
 ├── documents/                    # Diagramas PlantUML de paquetes y clases
 ├── docker/                       # Docker Compose de la app y de MongoDB
@@ -247,20 +246,24 @@ La API expone los siguientes endpoints para gestionar archivos PDF:
 | Método | Endpoint | Descripción | Request | Response |
 |--------|----------|-------------|---------|----------|
 | `GET` | `/api/v1/pdfs` | Listar todos los PDFs persistidos | — | `PDFListResponse` |
-| `POST` | `/api/v1/pdfs` | Subir PDF y extraer texto automáticamente (`409` si ya existe, `422` si es inválido, demasiado grande o sin texto) | `multipart/form-data` con archivo PDF | `PDFUploadResponse` con metadatos y preview del texto |
-| `GET` | `/api/v1/pdfs/{file_id}/text` | Obtener texto extraído de un PDF persistido | — | `PDFExtractResponse` con texto completo |
+| `POST` | `/api/v1/pdfs` | Subir PDF y extraer texto automáticamente (`409` si ya existe, `422` si es inválido, demasiado grande o sin texto) | `multipart/form-data` con archivo PDF | `PDFUploadResponse` (`id`, `filename`, `page_count`, `file_size`, `checksum`, `text_preview`) |
+| `GET` | `/api/v1/pdfs/{file_id}/text` | Obtener texto extraído de un PDF persistido | — | `PDFExtractResponse` (`id`, `filename`, `text`, `page_count`) |
 | `GET` | `/api/v1/pdfs/{doc_id}/download` | Descargar texto extraído como archivo `.txt` | — | `text/plain` |
 | `DELETE` | `/api/v1/pdfs/{doc_id}` | Eliminar permanentemente un PDF por ID | — | `204 No Content` |
+
+Los errores se devuelven como [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457): `404` documento inexistente, `409` contenido ya subido, `422` archivo inválido, demasiado grande o sin texto, `500` falla de la base de datos (sin exponer detalles internos).
+
+> **Cambio incompatible:** `POST /pdfs` ya no devuelve `is_duplicate` (siempre era `false`; un duplicado responde `409`) y `GET /pdfs/{id}/text` devuelve `page_count` en lugar de `pages_extracted` y `total_pages`, que siempre tenían el mismo valor.
 
 ---
 
 ## Principios Aplicados
 
-Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de software:
+Principios que guían el diseño del proyecto:
 
 ### Metodologías
 
-- **TDD (Test Driven Development)** - Tests escritos antes del código de producción
+- **TDD (Test Driven Development)** - Las correcciones y reglas nuevas se escriben con un test que primero falla y se commitea en rojo (ver pares `test(...)` → `fix(...)`/`feat(...)` en el historial). El código inicial no siguió este ciclo; la suite actual lo cubre a través de sus interfaces públicas
 - **Desarrollo dirigido en GitHub** - Control de versiones y gestión de tareas
 - **12-Factor App** - Aplicación de los 6 primeros principios para apps cloud-native
 
@@ -273,12 +276,12 @@ Este proyecto sigue rigurosamente las mejores prácticas de desarrollo de softwa
   - *S*ingle Responsibility: Cada clase tiene una única responsabilidad
   - *O*pen/Closed: Abierto para extensión, cerrado para modificación
   - *L*iskov Substitution: Interfaces bien definidas
-  - *I*nterface Segregation: Contratos específicos por rol
+  - *I*nterface Segregation: Contratos específicos por rol (`PDFReader` / `PDFWriter`)
   - *D*ependency Inversion: Dependencias de abstracciones, no concretos
 
 ### Arquitectura
 
-- **Arquitectura en capas con puertos y adaptadores** - el dominio y los casos de uso dependen de abstracciones (`PDFRepository`, `PDFTextExtractor`); MongoDB y pypdf son adaptadores intercambiables cableados en el composition root
+- **Arquitectura en capas con puertos y adaptadores** - el dominio y los casos de uso dependen de abstracciones (`PDFReader`, `PDFWriter`, `PDFTextExtractor`); MongoDB y pypdf son adaptadores intercambiables cableados en el composition root
 
 ---
 

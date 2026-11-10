@@ -13,12 +13,12 @@ package "app.use_cases" as usecases
 package "app.domain" as domain
 package "app.infrastructure" as infra
 package "app.config" as config
-package "app.exceptions" as exceptions
 
 routes --> usecases : ejecuta
 routes --> schemas : mapea a DTO
 routes --> deps : Depends
 schemas --> domain : from_document
+api --> domain : errores -> HTTP (RFC 9457)
 
 deps --> usecases : construye
 deps --> infra : instancia adaptadores
@@ -27,7 +27,5 @@ deps --> config : lee settings
 usecases --> domain : puertos + reglas
 
 infra ..|> domain : implementa puertos
-api --> exceptions : RFC 9457
-domain --> exceptions
 
 @enduml

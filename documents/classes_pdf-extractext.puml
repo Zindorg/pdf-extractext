@@ -3,36 +3,38 @@ set namespaceSeparator none
 skinparam classAttributeIconSize 0
 
 package "app.domain" {
-  class PDFDocument <<dataclass>> {
+  class PDFDocument <<entity>> {
     + id : str | None
     + checksum : str
     + filename : str
     + text_content : str
-    + content_type : str
     + page_count : int
     + file_size : int
     + created_at : datetime
     + updated_at : datetime
+    + {static} from_upload(file, text, page_count) : PDFDocument
+  }
+  class UploadedFile <<value object>> {
+    + filename : str
+    + content : bytes
+    + size : int
+    + checksum : str
+    + ensure_not_larger_than(max_size)
   }
   class ExtractedText <<NamedTuple>> {
     + text : str
     + page_count : int
   }
-  abstract class PDFRepository <<port>> {
-    + create(document) : PDFDocument
+  abstract class PDFReader <<port>> {
     + find_by_id(doc_id) : PDFDocument | None
-    + find_by_checksum(checksum) : PDFDocument | None
     + find_all() : list[PDFDocument]
+  }
+  abstract class PDFWriter <<port>> {
+    + create(document) : PDFDocument
     + delete_by_id(doc_id) : bool
   }
   abstract class PDFTextExtractor <<port>> {
     + extract(file_content) : ExtractedText
-  }
-  class pdf_rules <<module>> {
-    + validate_filename(filename)
-    + validate_content(file_content)
-    + validate_size(file_content, max_size)
-    + generate_checksum(file_content) : str
   }
 }
 
@@ -56,16 +58,19 @@ package "app.infrastructure" {
   class PypdfTextExtractor <<adapter>>
 }
 
-UploadPDF --> PDFRepository
+UploadPDF --> PDFWriter
 UploadPDF --> PDFTextExtractor
-UploadPDF ..> pdf_rules
-ListPDFs --> PDFRepository
-GetPDF --> PDFRepository
-DeletePDF --> PDFRepository
-PDFRepository ..> PDFDocument
+UploadPDF ..> UploadedFile
+ListPDFs --> PDFReader
+GetPDF --> PDFReader
+DeletePDF --> PDFWriter
+PDFDocument ..> UploadedFile
+PDFReader ..> PDFDocument
+PDFWriter ..> PDFDocument
 PDFTextExtractor ..> ExtractedText
 
-MongoPDFRepository ..|> PDFRepository
+MongoPDFRepository ..|> PDFReader
+MongoPDFRepository ..|> PDFWriter
 PypdfTextExtractor ..|> PDFTextExtractor
 
 @enduml

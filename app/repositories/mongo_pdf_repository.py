@@ -34,7 +34,6 @@ class MongoPDFRepository(PDFRepositoryInterface):
             "text_content": pdf_doc.text_content,
             "page_count": pdf_doc.page_count,
             "file_size": pdf_doc.file_size,
-            "deleted_at": pdf_doc.deleted_at,
             "created_at": pdf_doc.created_at or datetime.now(),
             "updated_at": pdf_doc.updated_at or datetime.now(),
         }
@@ -49,7 +48,6 @@ class MongoPDFRepository(PDFRepositoryInterface):
             text_content=doc["text_content"],
             page_count=doc.get("page_count", 0),
             file_size=doc.get("file_size", 0),
-            deleted_at=doc.get("deleted_at"),
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
         )
@@ -77,7 +75,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             raise RepositoryException(f"Failed to create document: {e}") from e
 
     def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
-        """Find active document by MongoDB ObjectId."""
+        """Find document by MongoDB ObjectId."""
         try:
             object_id = ObjectId(doc_id)
         except Exception:
@@ -85,7 +83,7 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return None
 
         try:
-            doc = self._collection.find_one({"_id": object_id, "deleted_at": None})
+            doc = self._collection.find_one({"_id": object_id})
             if doc:
                 logger.debug("Document found by id: %s", doc_id)
                 return self._from_document(doc)
@@ -96,9 +94,9 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return None
 
     def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
-        """Find active document by SHA-256 checksum."""
+        """Find document by SHA-256 checksum."""
         try:
-            doc = self._collection.find_one({"checksum": checksum, "deleted_at": None})
+            doc = self._collection.find_one({"checksum": checksum})
             if doc:
                 logger.debug("Document found by checksum: %s", checksum)
                 return self._from_document(doc)
@@ -109,79 +107,17 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return None
 
     def find_all(self) -> List[PDFDocument]:
-        """Find all active documents."""
+        """Find all documents, newest first."""
         try:
-            documents = self._collection.find({"deleted_at": None}).sort(
+            documents = self._collection.find().sort(
                 "created_at", -1
             )
             docs = [self._from_document(doc) for doc in documents]
-            logger.debug("Found %d active documents", len(docs))
+            logger.debug("Found %d documents", len(docs))
             return docs
         except PyMongoError:
             logger.error("MongoDB error while finding all documents")
             return []
-
-    def update(self, document: PDFDocument) -> Optional[PDFDocument]:
-        """Update an existing PDF document."""
-        if not document.id:
-            logger.warning("Update failed: document has no id")
-            return None
-
-        try:
-            object_id = ObjectId(document.id)
-        except Exception:
-            logger.warning("Update failed: invalid ObjectId: %s", document.id)
-            return None
-
-        update_data = {
-            "$set": {
-                "text_content": document.text_content,
-                "page_count": document.page_count,
-                "file_size": document.file_size,
-                "updated_at": datetime.now(),
-            }
-        }
-
-        try:
-            result = self._collection.update_one(
-                {"_id": object_id, "deleted_at": None},
-                update_data,
-            )
-            if result.modified_count > 0:
-                logger.info("Document updated: %s", document.id)
-                return self.find_by_id(document.id)
-            logger.warning("Update failed: document not found or not active: %s", document.id)
-            return None
-        except PyMongoError as e:
-            logger.error("Failed to update document %s: %s", document.id, e)
-            raise RepositoryException(f"Failed to update document: {e}") from e
-
-    def soft_delete(self, doc_id: str) -> bool:
-        """Soft delete document by ID."""
-        try:
-            object_id = ObjectId(doc_id)
-        except Exception:
-            logger.warning("Soft delete failed: invalid ObjectId: %s", doc_id)
-            return False
-
-        try:
-            result = self._collection.update_one(
-                {"_id": object_id, "deleted_at": None},
-                {
-                    "$set": {
-                        "deleted_at": datetime.now(),
-                        "updated_at": datetime.now(),
-                    }
-                },
-            )
-            if result.modified_count > 0:
-                logger.info("Document soft deleted: %s", doc_id)
-                return True
-            logger.warning("Soft delete failed: document not found or already deleted: %s", doc_id)
-            return False
-        except PyMongoError:
-            logger.error("MongoDB error during soft delete: %s", doc_id)
-            return False
 
     def delete_by_id(self, doc_id: str) -> bool:
         """Permanently delete document by ID."""
@@ -200,29 +136,4 @@ class MongoPDFRepository(PDFRepositoryInterface):
             return False
         except PyMongoError:
             logger.error("MongoDB error during hard delete: %s", doc_id)
-            return False
-
-    def restore(self, doc_id: str) -> bool:
-        """Restore a soft-deleted document."""
-        try:
-            object_id = ObjectId(doc_id)
-        except Exception:
-            logger.warning("Restore failed: invalid ObjectId: %s", doc_id)
-            return False
-
-        try:
-            result = self._collection.update_one(
-                {"_id": object_id, "deleted_at": {"$ne": None}},
-                {
-                    "$set": {"updated_at": datetime.now()},
-                    "$unset": {"deleted_at": ""},
-                },
-            )
-            if result.modified_count > 0:
-                logger.info("Document restored: %s", doc_id)
-                return True
-            logger.warning("Restore failed: document not found or not deleted: %s", doc_id)
-            return False
-        except PyMongoError:
-            logger.error("MongoDB error during restore: %s", doc_id)
             return False

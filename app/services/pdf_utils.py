@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import re
 from pathlib import Path
 
 from app.exceptions import InvalidFileException
@@ -21,15 +20,6 @@ def generate_checksum(file_content: bytes) -> str:
     checksum = hashlib.sha256(file_content).hexdigest()
     logger.debug("Generated checksum: %s", checksum)
     return checksum
-
-
-def sanitize_filename(filename: str) -> str:
-    """Sanitize filename for safe usage."""
-    base = Path(filename).stem
-    sanitized = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
-    result = sanitized[:50] or "document"
-    logger.debug("Sanitized filename: %s -> %s", filename, result)
-    return result
 
 
 def validate_filename(filename: str) -> None:

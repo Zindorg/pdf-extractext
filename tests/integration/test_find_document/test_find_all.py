@@ -7,7 +7,7 @@ class TestFindAll:
     """Test READ all operation."""
 
     def test_find_all_returns_list_of_documents(self, mongo_repository):
-        """Verify find_all returns all non-deleted documents."""
+        """Verify find_all returns all documents."""
         # Create multiple documents
         for i in range(3):
             doc = PDFDocument(
@@ -24,19 +24,3 @@ class TestFindAll:
         assert "test_list_0" in checksums
         assert "test_list_1" in checksums
         assert "test_list_2" in checksums
-
-    def test_find_all_excludes_deleted_documents(self, mongo_repository):
-        """Verify deleted documents are excluded from results."""
-        # Create and then delete a document
-        doc = PDFDocument(
-            checksum="test_exclude_deleted",
-            filename="test_exclude.pdf",
-            text_content="To be deleted",
-        )
-        created = mongo_repository.create(doc)
-        mongo_repository.soft_delete(created.id)
-
-        results = mongo_repository.find_all()
-
-        checksums = [d.checksum for d in results]
-        assert "test_exclude_deleted" not in checksums

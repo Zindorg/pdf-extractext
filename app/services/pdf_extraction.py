@@ -20,17 +20,6 @@ logger = logging.getLogger(__name__)
 class PDFExtraction(PDFCore):
     """Service for extracting text from PDF documents."""
 
-    def extract_text(self, file_content: bytes) -> str:
-        """Extract text from PDF bytes and return it."""
-        logger.debug("Extracting text from PDF content (%d bytes)", len(file_content))
-        try:
-            text, _page_count = pdf_extractor.extract_text(file_content)
-            logger.debug("Text extraction successful (%d chars)", len(text))
-            return text
-        except Exception as e:
-            logger.error("Text extraction failed: %s", e)
-            raise PDFExtractionException(f"Text extraction failed: {e}") from e
-
     async def process_pdf(self, file_content: bytes, filename: str) -> PDFDocument:
         """Process a new PDF and persist to MongoDB."""
         logger.debug("Processing PDF: %s (%d bytes)", filename, len(file_content))

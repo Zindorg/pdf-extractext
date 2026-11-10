@@ -35,7 +35,6 @@ def make_mongo_doc(**overrides) -> dict:
         "text_content": "content",
         "page_count": 1,
         "file_size": 100,
-        "deleted_at": None,
         "created_at": now,
         "updated_at": now,
     }

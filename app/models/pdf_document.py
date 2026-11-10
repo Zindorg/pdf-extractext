@@ -16,7 +16,6 @@ class PDFDocument:
     content_type: str = "application/pdf"
     page_count: int = 0
     file_size: int = 0
-    deleted_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -26,8 +25,3 @@ class PDFDocument:
             self.created_at = datetime.now()
         if self.updated_at is None:
             self.updated_at = datetime.now()
-
-    def update_text(self, text: str) -> None:
-        """Update text content and timestamp."""
-        self.text_content = text
-        self.updated_at = datetime.now()

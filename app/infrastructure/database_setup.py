@@ -20,12 +20,6 @@ def create_indexes(db: Database) -> None:
         name="idx_checksum_unique",
     )
 
-    # Index for filtering active/deleted documents
-    collection.create_index(
-        [("deleted_at", ASCENDING)],
-        name="idx_deleted_at",
-    )
-
     # Index for chronological queries
     collection.create_index(
         [("created_at", DESCENDING)],

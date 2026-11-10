@@ -11,40 +11,24 @@ class PDFRepositoryInterface(ABC):
 
     @abstractmethod
     def create(self, document: PDFDocument) -> PDFDocument:
-        """Create a new PDF document in storage."""
-        pass
+        """Persist a new document and return it with its id.
+
+        Raises:
+            DuplicateDocumentException: If a document with the same checksum exists.
+        """
 
     @abstractmethod
     def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
-        """Find active document by ID."""
-        pass
+        """Find a document by id; None if it does not exist or the id is invalid."""
 
     @abstractmethod
     def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
-        """Find active document by checksum."""
-        pass
+        """Find a document by its SHA-256 checksum."""
 
     @abstractmethod
     def find_all(self) -> List[PDFDocument]:
-        """Find all active (non-deleted) documents."""
-        pass
-
-    @abstractmethod
-    def update(self, document: PDFDocument) -> Optional[PDFDocument]:
-        """Update an existing PDF document."""
-        pass
-
-    @abstractmethod
-    def soft_delete(self, doc_id: str) -> bool:
-        """Soft delete document by ID."""
-        pass
+        """Return all documents, newest first."""
 
     @abstractmethod
     def delete_by_id(self, doc_id: str) -> bool:
-        """Permanently delete document by ID."""
-        pass
-
-    @abstractmethod
-    def restore(self, doc_id: str) -> bool:
-        """Restore a soft-deleted document."""
-        pass
+        """Permanently delete a document; True if something was deleted."""

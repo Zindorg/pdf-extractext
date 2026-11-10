@@ -48,13 +48,3 @@ class InMemoryPDFRepository(PDFRepositoryInterface):
 
     def delete_by_id(self, doc_id: str) -> bool:
         return self._docs.pop(doc_id, None) is not None
-
-    # --- Métodos heredados de la interfaz actual (se eliminan en la Fase 2) ---
-    def update(self, document):  # pragma: no cover
-        raise NotImplementedError
-
-    def soft_delete(self, doc_id):  # pragma: no cover
-        raise NotImplementedError
-
-    def restore(self, doc_id):  # pragma: no cover
-        raise NotImplementedError

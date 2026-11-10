@@ -17,10 +17,7 @@ def mock_repository():
     mock.find_by_id = MagicMock(return_value=None)
     mock.find_by_checksum = MagicMock(return_value=None)
     mock.find_all = MagicMock(return_value=[])
-    mock.update = MagicMock(return_value=None)
-    mock.soft_delete = MagicMock(return_value=False)
     mock.delete_by_id = MagicMock(return_value=False)
-    mock.restore = MagicMock(return_value=False)
     return mock
 
 

@@ -1,34 +1,21 @@
-"""Use case for deleting a PDF document."""
+"""Use case: permanently delete a PDF."""
 
 import logging
 
-from app.services.pdf_commands import PDFCommands
+from app.domain.ports import PDFRepository
+from app.exceptions import PDFNotFoundException
 
 logger = logging.getLogger(__name__)
 
 
 class DeletePDF:
-    """Handle PDF document deletion."""
+    """Delete a persisted document or fail with 404."""
 
-    def __init__(self, commands: PDFCommands) -> None:
-        """Initialize with commands service.
+    def __init__(self, repository: PDFRepository) -> None:
+        self._repository = repository
 
-        Args:
-            commands: Injected PDF commands service.
-        """
-        self._commands = commands
-
-    def execute(self, doc_id: str) -> bool:
-        """Permanently delete a PDF document by ID.
-
-        Args:
-            doc_id: Document ID.
-
-        Returns:
-            True if deleted, False otherwise.
-        """
-        logger.debug("Deleting PDF: %s", doc_id)
-        deleted = self._commands.delete_by_id(doc_id)
-        if not deleted:
-            logger.warning("PDF not found or already deleted: %s", doc_id)
-        return deleted
+    def execute(self, doc_id: str) -> None:
+        """Raises PDFNotFoundException if the document does not exist."""
+        if not self._repository.delete_by_id(doc_id):
+            raise PDFNotFoundException(f"Document not found: {doc_id}")
+        logger.info("PDF deleted: %s", doc_id)

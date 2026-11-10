@@ -1,30 +1,22 @@
-"""FastAPI routes for PDF operations."""
+"""FastAPI routes for PDF operations (HTTP adapter)."""
 
 import logging
 from pathlib import PurePath
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, File, Response, UploadFile
 
 from app.dependencies import (
     get_delete_pdf_use_case,
-    get_download_text_use_case,
-    get_extract_text_use_case,
+    get_get_pdf_use_case,
     get_list_pdfs_use_case,
-    get_process_pdf_use_case,
+    get_upload_pdf_use_case,
 )
-from app.exceptions import PDFNotFoundException
-from app.schemas.pdf_schemas import (
-    PDFExtractResponse,
-    PDFListResponse,
-    PDFUploadResponse,
-)
+from app.schemas.pdf_schemas import PDFExtractResponse, PDFListResponse, PDFUploadResponse
 from app.use_cases.delete_pdf import DeletePDF
-from app.use_cases.download_text import DownloadExtractedText
-from app.use_cases.extract_text import ExtractText
+from app.use_cases.get_pdf import GetPDF
 from app.use_cases.list_pdfs import ListPDFs
-from app.use_cases.process_pdf import ProcessPDFFile
+from app.use_cases.upload_pdf import UploadPDF
 
 logger = logging.getLogger(__name__)
 
@@ -33,79 +25,42 @@ router = APIRouter(prefix="/pdfs", tags=["PDF"])
 
 @router.get("", response_model=PDFListResponse)
 def list_pdfs(use_case: ListPDFs = Depends(get_list_pdfs_use_case)) -> PDFListResponse:
-    """List all persisted PDF documents.
-
-    Args:
-        use_case: Injected ListPDFs use case.
-
-    Returns:
-        List of all PDF documents with metadata.
-    """
-    logger.info("GET /pdfs — listing all documents")
-    return use_case.execute()
+    """List all persisted PDF documents."""
+    return PDFListResponse.from_documents(use_case.execute())
 
 
 @router.post("", response_model=PDFUploadResponse)
-async def upload_pdf(
-    file: UploadFile = File(...), use_case: ProcessPDFFile = Depends(get_process_pdf_use_case)
+def upload_pdf(
+    file: UploadFile = File(...),
+    use_case: UploadPDF = Depends(get_upload_pdf_use_case),
 ) -> PDFUploadResponse:
-    """Upload a PDF file, extract text, and persist metadata to MongoDB.
-
-    Args:
-        file: Uploaded PDF file.
-        use_case: Injected ProcessPDFFile use case.
-
-    Returns:
-        Upload response with persisted document metadata.
-    """
+    """Upload a PDF file, extract its text and persist it."""
     logger.info("POST /pdfs — uploading file: %s", file.filename)
-    content = await file.read()
-    result = await use_case.execute(content, file.filename)
-    logger.info("File uploaded successfully: %s (id: %s)", file.filename, result["id"])
-    return PDFUploadResponse(**result)
+    document = use_case.execute(file.file.read(), file.filename)
+    return PDFUploadResponse.from_document(document)
 
 
 @router.get("/{file_id}/text", response_model=PDFExtractResponse)
-def get_text(
-    file_id: str,
-    use_case: ExtractText = Depends(get_extract_text_use_case),
-) -> PDFExtractResponse:
-    """Get extracted text from a previously persisted PDF document.
-
-    Args:
-        file_id: Document ID.
-        use_case: Injected ExtractText use case.
-
-    Returns:
-        Extracted text response.
-    """
-    logger.info("GET /pdfs/%s/text — retrieving text", file_id)
-    return use_case.execute(file_id)
+def get_text(file_id: str, use_case: GetPDF = Depends(get_get_pdf_use_case)) -> PDFExtractResponse:
+    """Get the text extracted from a persisted PDF."""
+    return PDFExtractResponse.from_document(use_case.execute(file_id))
 
 
 @router.get("/{doc_id}/download")
-def download_pdf_text(
-    doc_id: str, use_case: DownloadExtractedText = Depends(get_download_text_use_case)
-) -> StreamingResponse:
-    """Download extracted text as a .txt file.
-
-    Generates a plain text file on-the-fly from the text
-    previously extracted and persisted in MongoDB.
-
-    Args:
-        doc_id: Document ID.
-        use_case: Injected DownloadExtractedText use case.
-
-    Returns:
-        StreamingResponse with text/plain content disposition.
-    """
-    logger.info("GET /pdfs/%s/download — downloading text", doc_id)
-    doc = use_case.execute(doc_id)
-    return StreamingResponse(
-        use_case.stream_text(doc.text_content),
+def download_pdf_text(doc_id: str, use_case: GetPDF = Depends(get_get_pdf_use_case)) -> Response:
+    """Download the extracted text as a .txt file."""
+    document = use_case.execute(doc_id)
+    return Response(
+        content=document.text_content,
         media_type="text/plain; charset=utf-8",
-        headers={"Content-Disposition": _attachment_header(doc.filename)},
+        headers={"Content-Disposition": _attachment_header(document.filename)},
     )
+
+
+@router.delete("/{doc_id}", status_code=204)
+def delete_pdf(doc_id: str, use_case: DeletePDF = Depends(get_delete_pdf_use_case)) -> None:
+    """Permanently delete a PDF document by ID."""
+    use_case.execute(doc_id)
 
 
 def _attachment_header(pdf_filename: str) -> str:
@@ -119,21 +74,3 @@ def _attachment_header(pdf_filename: str) -> str:
         c if c.isascii() and c.isprintable() and c not in '"\\' else "_" for c in txt_name
     )
     return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(txt_name)}"
-
-
-@router.delete("/{doc_id}", status_code=204)
-def delete_pdf(
-    doc_id: str, use_case: DeletePDF = Depends(get_delete_pdf_use_case)
-) -> None:
-    """Permanently delete a PDF document by ID.
-
-    Args:
-        doc_id: Document ID.
-        use_case: Injected DeletePDF use case.
-
-    """
-    logger.info("DELETE /pdfs/%s — deleting document", doc_id)
-    deleted = use_case.execute(doc_id)
-    if not deleted:
-        raise PDFNotFoundException(detail=f"Document not found: {doc_id}")
-    return None

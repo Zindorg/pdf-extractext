@@ -29,7 +29,11 @@ async def pdf_extractext_exception_handler(
     request: Request, exc: PDFExtractextException
 ) -> JSONResponse:
     """Handle generic PDF application exceptions."""
-    logger.error("Application exception: %s (status=%d)", exc, exc.status)
+    if exc.status >= 500:
+        # Traza completa (incluida la causa del driver) solo en el log.
+        logger.error("Server error: %s", exc, exc_info=exc)
+    else:
+        logger.info("Client error: %s (status=%d)", exc, exc.status)
     return _build_problem_detail(
         title=exc.title,
         detail=str(exc),

@@ -41,13 +41,6 @@ class DuplicateDocumentException(PDFExtractextException):
         self.existing_id = existing_id
 
 
-class DatabaseConnectionException(PDFExtractextException):
-    """Failed to connect to database."""
-
-    def __init__(self, detail: str = "Database connection failed"):
-        super().__init__(title="Internal Server Error", detail=detail, status=500)
-
-
 class RepositoryException(PDFExtractextException):
     """Repository operation failed."""
 

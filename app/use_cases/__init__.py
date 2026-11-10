@@ -1,5 +1,1 @@
-"""Use cases for PDF operations."
-
-This module contains application-level use cases that orchestrate
-services for specific business operations.
-"""
+"""Application use cases: one class per operation, depending only on ports."""

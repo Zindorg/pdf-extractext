@@ -6,12 +6,14 @@ from pymongo import ASCENDING, DESCENDING
 from pymongo.collection import Collection
 from pymongo.database import Database
 
+from app.infrastructure.mongo_pdf_repository import COLLECTION_NAME
+
 logger = logging.getLogger(__name__)
 
 
 def create_indexes(db: Database) -> None:
     """Create all required indexes for the application."""
-    collection: Collection = db["pdf_documents"]
+    collection: Collection = db[COLLECTION_NAME]
 
     # Unique index on checksum for duplicate detection
     collection.create_index(

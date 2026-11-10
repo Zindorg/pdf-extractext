@@ -1,79 +1,49 @@
-"""Dependency injection helpers for FastAPI application.
+"""Composition root: wires adapters and configuration into the use cases.
 
-This module provides FastAPI-compatible dependency injection functions.
-It acts as the wiring layer between infrastructure and the API layer,
-connecting concrete implementations without exposing them to consumers.
+This is the only module (besides main.py) that knows about concrete
+infrastructure classes and about settings.
 """
 
 from fastapi import Depends, Request
+from pymongo.database import Database
 
-from app.repositories.mongo_pdf_repository import MongoPDFRepository
-from app.services.pdf_commands import PDFCommands
-from app.services.pdf_extraction import PDFExtraction
-from app.services.pdf_queries import PDFQueries
+from app.config.settings import settings
+from app.domain.ports import PDFRepository, PDFTextExtractor
+from app.infrastructure.mongo_pdf_repository import MongoPDFRepository
+from app.infrastructure.pypdf_extractor import PypdfTextExtractor
 from app.use_cases.delete_pdf import DeletePDF
-from app.use_cases.download_text import DownloadExtractedText
-from app.use_cases.extract_text import ExtractText
+from app.use_cases.get_pdf import GetPDF
 from app.use_cases.list_pdfs import ListPDFs
-from app.use_cases.process_pdf import ProcessPDFFile
+from app.use_cases.upload_pdf import UploadPDF
 
 
-# --- Database dependency ---
-
-def get_database(request: Request):
-    """Get MongoDB database instance from app state."""
+def get_database(request: Request) -> Database:
+    """MongoDB database opened in the application lifespan."""
     return request.app.state.mongodb_database
 
 
-# --- Repository dependency ---
-
-def get_pdf_repository(database=Depends(get_database)):
-    """Create PDF repository with injected database."""
+def get_pdf_repository(database: Database = Depends(get_database)) -> PDFRepository:
     return MongoPDFRepository(database=database)
 
 
-# --- Service dependencies ---
-
-def get_pdf_queries(repository=Depends(get_pdf_repository)):
-    """Create PDF queries service with injected repository."""
-    return PDFQueries(repository=repository)
+def get_text_extractor() -> PDFTextExtractor:
+    return PypdfTextExtractor()
 
 
-def get_pdf_extraction(repository=Depends(get_pdf_repository)):
-    """Create PDF extraction service with injected repository."""
-    return PDFExtraction(repository=repository)
+def get_upload_pdf_use_case(
+    repository: PDFRepository = Depends(get_pdf_repository),
+    extractor: PDFTextExtractor = Depends(get_text_extractor),
+) -> UploadPDF:
+    return UploadPDF(repository, extractor, max_file_size=settings.max_file_size)
 
 
-def get_pdf_commands(repository=Depends(get_pdf_repository)):
-    """Create PDF commands service with injected repository."""
-    return PDFCommands(repository=repository)
+def get_list_pdfs_use_case(repository: PDFRepository = Depends(get_pdf_repository)) -> ListPDFs:
+    return ListPDFs(repository)
 
 
-# --- Use case dependency injectors ---
-
-def get_list_pdfs_use_case(queries=Depends(get_pdf_queries)):
-    """Inject ListPDFs use case."""
-    return ListPDFs(queries)
+def get_get_pdf_use_case(repository: PDFRepository = Depends(get_pdf_repository)) -> GetPDF:
+    return GetPDF(repository)
 
 
-def get_extract_text_use_case(queries=Depends(get_pdf_queries)):
-    """Inject ExtractText use case."""
-    return ExtractText(queries)
-
-
-def get_delete_pdf_use_case(commands=Depends(get_pdf_commands)):
-    """Inject DeletePDF use case."""
-    return DeletePDF(commands)
-
-
-def get_download_text_use_case(queries=Depends(get_pdf_queries)):
-    """Inject DownloadExtractedText use case."""
-    return DownloadExtractedText(queries)
-
-
-def get_process_pdf_use_case(
-    extraction=Depends(get_pdf_extraction),
-    queries=Depends(get_pdf_queries),
-):
-    """Inject ProcessPDFFile use case."""
-    return ProcessPDFFile(extraction, queries)
+def get_delete_pdf_use_case(repository: PDFRepository = Depends(get_pdf_repository)) -> DeletePDF:
+    return DeletePDF(repository)

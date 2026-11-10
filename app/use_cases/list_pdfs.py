@@ -1,47 +1,16 @@
-"""Use case for listing all PDF documents."""
+"""Use case: list all persisted PDFs."""
 
-import logging
 from typing import List
 
-from app.models.pdf_document import PDFDocument
-from app.schemas.pdf_schemas import PDFDocumentResponse, PDFListResponse
-from app.services.pdf_queries import PDFQueries
-
-logger = logging.getLogger(__name__)
+from app.domain.pdf_document import PDFDocument
+from app.domain.ports import PDFRepository
 
 
 class ListPDFs:
-    """Retrieve all persisted PDF documents."""
+    """Return every persisted document, newest first."""
 
-    def __init__(self, queries: PDFQueries):
-        """Initialize with queries service.
+    def __init__(self, repository: PDFRepository) -> None:
+        self._repository = repository
 
-        Args:
-            queries: Injected PDF queries service.
-        """
-        self._queries = queries
-
-    def execute(self) -> PDFListResponse:
-        """Retrieve all PDFs and map to response schema.
-
-        Returns:
-            PDFListResponse with list of documents and total count.
-        """
-        logger.debug("Listing all PDF documents")
-        documents: List[PDFDocument] = self._queries.find_all()
-
-        doc_responses = [
-            PDFDocumentResponse(
-                id=doc.id,
-                filename=doc.filename,
-                page_count=doc.page_count,
-                file_size=doc.file_size,
-                checksum=doc.checksum,
-                created_at=doc.created_at,
-                updated_at=doc.updated_at,
-            )
-            for doc in documents
-        ]
-
-        logger.debug("Found %d PDF documents", len(doc_responses))
-        return PDFListResponse(documents=doc_responses, total=len(doc_responses))
+    def execute(self) -> List[PDFDocument]:
+        return self._repository.find_all()

@@ -1,13 +1,21 @@
-"""Pydantic schemas for API requests and responses."""
+"""Pydantic schemas (DTOs) for API responses.
+
+Each response knows how to build itself from the domain entity, so the
+mapping lives in a single place per DTO.
+"""
 
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.pdf_document import PDFDocument
+
+TEXT_PREVIEW_LENGTH = 500
+
 
 class PDFDocumentResponse(BaseModel):
-    """Base response for PDF document."""
+    """Metadata of a persisted PDF."""
 
     id: str
     filename: str
@@ -26,7 +34,12 @@ class PDFListResponse(BaseModel):
     documents: list[PDFDocumentResponse]
     total: int
 
-    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_documents(cls, documents: list[PDFDocument]) -> "PDFListResponse":
+        return cls(
+            documents=[PDFDocumentResponse.model_validate(doc) for doc in documents],
+            total=len(documents),
+        )
 
 
 class PDFUploadResponse(BaseModel):
@@ -36,11 +49,20 @@ class PDFUploadResponse(BaseModel):
     filename: str
     page_count: int
     file_size: int
-    text_preview: str = Field(..., max_length=500)
+    text_preview: str = Field(..., max_length=TEXT_PREVIEW_LENGTH)
     checksum: str
     is_duplicate: bool = False
 
-    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_document(cls, doc: PDFDocument) -> "PDFUploadResponse":
+        return cls(
+            id=doc.id,
+            filename=doc.filename,
+            page_count=doc.page_count,
+            file_size=doc.file_size,
+            text_preview=doc.text_content[:TEXT_PREVIEW_LENGTH],
+            checksum=doc.checksum,
+        )
 
 
 class PDFExtractResponse(BaseModel):
@@ -52,4 +74,12 @@ class PDFExtractResponse(BaseModel):
     pages_extracted: int
     total_pages: int
 
-    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_document(cls, doc: PDFDocument) -> "PDFExtractResponse":
+        return cls(
+            id=doc.id,
+            filename=doc.filename,
+            text=doc.text_content,
+            pages_extracted=doc.page_count,
+            total_pages=doc.page_count,
+        )

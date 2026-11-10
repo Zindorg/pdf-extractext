@@ -1,4 +1,4 @@
-"""Implementaciones de PDFRepository sobre las que corre el contrato.
+"""Implementaciones de PDFReader + PDFWriter sobre las que corre el contrato.
 
 - memory:    el fake usado por el resto de la suite.
 - mongomock: el adaptador real de MongoDB sobre un Mongo en memoria.

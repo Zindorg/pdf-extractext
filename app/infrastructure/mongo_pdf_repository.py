@@ -1,4 +1,4 @@
-"""MongoDB adapter for the PDFRepository port."""
+"""MongoDB adapter for the PDFReader and PDFWriter ports."""
 
 import logging
 from typing import List, Optional
@@ -10,7 +10,7 @@ from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError, PyMongoError
 
 from app.domain.pdf_document import PDFDocument
-from app.domain.ports import PDFRepository
+from app.domain.ports import PDFReader, PDFWriter
 from app.domain.exceptions import DuplicateDocumentException, RepositoryException
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 COLLECTION_NAME = "pdf_documents"
 
 
-class MongoPDFRepository(PDFRepository):
+class MongoPDFRepository(PDFReader, PDFWriter):
     """Persist PDF documents in a MongoDB collection.
 
     Driver errors are translated into RepositoryException (HTTP 500) instead
@@ -32,10 +32,8 @@ class MongoPDFRepository(PDFRepository):
         try:
             result = self._collection.insert_one(_to_mongo(document))
         except DuplicateKeyError as e:
-            existing = self.find_by_checksum(document.checksum)
             raise DuplicateDocumentException(
-                f"Document with checksum {document.checksum} already exists",
-                existing_id=existing.id if existing else None,
+                f"Document with checksum {document.checksum} already exists"
             ) from e
         except PyMongoError as e:
             raise RepositoryException("Failed to create document") from e
@@ -47,10 +45,11 @@ class MongoPDFRepository(PDFRepository):
         object_id = _parse_object_id(doc_id)
         if object_id is None:
             return None
-        return self._find_one({"_id": object_id})
-
-    def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
-        return self._find_one({"checksum": checksum})
+        try:
+            doc = self._collection.find_one({"_id": object_id})
+        except PyMongoError as e:
+            raise RepositoryException("Failed to read document") from e
+        return _from_mongo(doc) if doc else None
 
     def find_all(self) -> List[PDFDocument]:
         try:
@@ -67,13 +66,6 @@ class MongoPDFRepository(PDFRepository):
         except PyMongoError as e:
             raise RepositoryException("Failed to delete document") from e
 
-    def _find_one(self, query: dict) -> Optional[PDFDocument]:
-        try:
-            doc = self._collection.find_one(query)
-        except PyMongoError as e:
-            raise RepositoryException("Failed to read document") from e
-        return _from_mongo(doc) if doc else None
-
 
 def _parse_object_id(doc_id: str) -> Optional[ObjectId]:
     """Return the ObjectId, or None when the id is malformed (treated as not found)."""
@@ -88,7 +80,6 @@ def _to_mongo(document: PDFDocument) -> dict:
     return {
         "checksum": document.checksum,
         "filename": document.filename,
-        "content_type": document.content_type,
         "text_content": document.text_content,
         "page_count": document.page_count,
         "file_size": document.file_size,
@@ -102,7 +93,6 @@ def _from_mongo(doc: dict) -> PDFDocument:
         id=str(doc["_id"]),
         checksum=doc["checksum"],
         filename=doc["filename"],
-        content_type=doc.get("content_type", "application/pdf"),
         text_content=doc["text_content"],
         page_count=doc.get("page_count", 0),
         file_size=doc.get("file_size", 0),

@@ -14,18 +14,18 @@ from typing import Dict, List, Optional
 from bson import ObjectId
 
 from app.domain.pdf_document import PDFDocument
-from app.domain.ports import ExtractedText, PDFRepository, PDFTextExtractor
+from app.domain.ports import ExtractedText, PDFReader, PDFTextExtractor, PDFWriter
 from app.domain.exceptions import DuplicateDocumentException, PDFExtractionException
 
 
-class InMemoryPDFRepository(PDFRepository):
+class InMemoryPDFRepository(PDFReader, PDFWriter):
     """Repositorio en memoria con las mismas reglas que el de MongoDB."""
 
     def __init__(self) -> None:
         self._docs: Dict[str, PDFDocument] = {}
 
     def create(self, document: PDFDocument) -> PDFDocument:
-        if self.find_by_checksum(document.checksum):
+        if any(d.checksum == document.checksum for d in self._docs.values()):
             raise DuplicateDocumentException(
                 f"Document with checksum {document.checksum} already exists"
             )
@@ -36,10 +36,6 @@ class InMemoryPDFRepository(PDFRepository):
     def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
         doc = self._docs.get(doc_id)
         return copy.deepcopy(doc) if doc else None
-
-    def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
-        match = next((d for d in self._docs.values() if d.checksum == checksum), None)
-        return copy.deepcopy(match) if match else None
 
     def find_all(self) -> List[PDFDocument]:
         docs = sorted(self._docs.values(), key=lambda d: d.created_at, reverse=True)

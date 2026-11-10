@@ -21,10 +21,6 @@ class PDFExtractionException(PDFExtractextException):
 class DuplicateDocumentException(PDFExtractextException):
     """A document with the same content (checksum) already exists."""
 
-    def __init__(self, message: str, existing_id: str | None = None):
-        super().__init__(message)
-        self.existing_id = existing_id
-
 
 class PDFNotFoundException(PDFExtractextException):
     """No document exists with the requested id."""

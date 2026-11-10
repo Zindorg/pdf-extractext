@@ -35,15 +35,15 @@ class TestSuccessfulUpload:
 
 
 class TestRejectedUpload:
-    def test_duplicate_content_is_rejected_with_existing_id(self, upload):
-        original = upload(b"mismo contenido", "a.pdf")
+    def test_duplicate_content_is_rejected(self, upload, repository):
+        upload(b"mismo contenido", "a.pdf")
 
-        with pytest.raises(DuplicateDocumentException) as exc:
+        with pytest.raises(DuplicateDocumentException):
             upload(b"mismo contenido", "b.pdf")
 
-        assert exc.value.existing_id == original.id
+        assert len(repository.find_all()) == 1
 
-    def test_file_over_max_size_is_rejected_before_extracting(self, upload, repository):
+    def test_file_over_max_size_is_rejected(self, upload, repository):
         with pytest.raises(InvalidFileException, match="too large"):
             upload(b"x" * (MAX_SIZE + 1), "grande.pdf")
         assert repository.find_all() == []

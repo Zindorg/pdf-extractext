@@ -1,4 +1,4 @@
-"""Contrato de PDFRepository: toda implementación debe pasar estos tests.
+"""Contrato de PDFReader + PDFWriter: toda implementación debe pasar estos tests.
 
 Reemplaza a los tests de forma (inspect.signature) y a los mocks de la
 colección: se verifica comportamiento a través de la interfaz pública,
@@ -44,12 +44,6 @@ class TestCreate:
 
 
 class TestFind:
-    def test_find_by_checksum(self, repo):
-        created = repo.create(make_pdf_document(checksum="buscado"))
-
-        assert repo.find_by_checksum("buscado").id == created.id
-        assert repo.find_by_checksum("otro") is None
-
     @pytest.mark.parametrize("doc_id", [VALID_UNKNOWN_ID, "no-es-un-object-id", ""])
     def test_find_by_id_returns_none_for_unknown_or_invalid_ids(self, repo, doc_id):
         assert repo.find_by_id(doc_id) is None

@@ -8,7 +8,7 @@ from fastapi import Depends, Request
 from pymongo.database import Database
 
 from app.config.settings import settings
-from app.domain.ports import PDFRepository, PDFTextExtractor
+from app.domain.ports import PDFReader, PDFTextExtractor, PDFWriter
 from app.infrastructure.mongo_pdf_repository import MongoPDFRepository
 from app.infrastructure.pypdf_extractor import PypdfTextExtractor
 from app.use_cases.delete_pdf import DeletePDF
@@ -22,7 +22,8 @@ def get_database(request: Request) -> Database:
     return request.app.state.mongodb_database
 
 
-def get_pdf_repository(database: Database = Depends(get_database)) -> PDFRepository:
+def get_pdf_repository(database: Database = Depends(get_database)) -> MongoPDFRepository:
+    """Single adapter that implements both PDFReader and PDFWriter."""
     return MongoPDFRepository(database=database)
 
 
@@ -31,19 +32,19 @@ def get_text_extractor() -> PDFTextExtractor:
 
 
 def get_upload_pdf_use_case(
-    repository: PDFRepository = Depends(get_pdf_repository),
+    writer: PDFWriter = Depends(get_pdf_repository),
     extractor: PDFTextExtractor = Depends(get_text_extractor),
 ) -> UploadPDF:
-    return UploadPDF(repository, extractor, max_file_size=settings.max_file_size)
+    return UploadPDF(writer, extractor, max_file_size=settings.max_file_size)
 
 
-def get_list_pdfs_use_case(repository: PDFRepository = Depends(get_pdf_repository)) -> ListPDFs:
-    return ListPDFs(repository)
+def get_list_pdfs_use_case(reader: PDFReader = Depends(get_pdf_repository)) -> ListPDFs:
+    return ListPDFs(reader)
 
 
-def get_get_pdf_use_case(repository: PDFRepository = Depends(get_pdf_repository)) -> GetPDF:
-    return GetPDF(repository)
+def get_get_pdf_use_case(reader: PDFReader = Depends(get_pdf_repository)) -> GetPDF:
+    return GetPDF(reader)
 
 
-def get_delete_pdf_use_case(repository: PDFRepository = Depends(get_pdf_repository)) -> DeletePDF:
-    return DeletePDF(repository)
+def get_delete_pdf_use_case(writer: PDFWriter = Depends(get_pdf_repository)) -> DeletePDF:
+    return DeletePDF(writer)

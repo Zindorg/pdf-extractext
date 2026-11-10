@@ -12,15 +12,13 @@ from app.infrastructure.mongo_pdf_repository import MongoPDFRepository
 from tests.unit.factories import make_pdf_document
 
 
-def test_unique_index_rejects_duplicates_even_without_prior_lookup():
-    """Si dos subidas iguales llegan a la vez, el índice único decide."""
+def test_unique_index_rejects_duplicate_checksums():
+    """El índice único es la única fuente de verdad de la deduplicación."""
     repo = MongoPDFRepository(setup_database(mongomock.MongoClient().db))
-    first = repo.create(make_pdf_document(checksum="race"))
+    repo.create(make_pdf_document(checksum="race"))
 
-    with pytest.raises(DuplicateDocumentException) as exc:
+    with pytest.raises(DuplicateDocumentException):
         repo.create(make_pdf_document(checksum="race"))
-
-    assert exc.value.existing_id == first.id
 
 
 @pytest.mark.parametrize(
@@ -28,11 +26,10 @@ def test_unique_index_rejects_duplicates_even_without_prior_lookup():
     [
         lambda repo: repo.create(make_pdf_document()),
         lambda repo: repo.find_by_id("507f1f77bcf86cd799439011"),
-        lambda repo: repo.find_by_checksum("abc"),
         lambda repo: repo.find_all(),
         lambda repo: repo.delete_by_id("507f1f77bcf86cd799439011"),
     ],
-    ids=["create", "find_by_id", "find_by_checksum", "find_all", "delete_by_id"],
+    ids=["create", "find_by_id", "find_all", "delete_by_id"],
 )
 def test_database_errors_surface_as_repository_exception(call):
     """Una caída de MongoDB nunca debe parecer un 'no encontrado'."""

@@ -30,8 +30,20 @@ class PDFTextExtractor(ABC):
         """
 
 
-class PDFRepository(ABC):
-    """Persistence of PDF documents."""
+class PDFReader(ABC):
+    """Read access to stored PDF documents."""
+
+    @abstractmethod
+    def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
+        """Find a document by id; None if it does not exist or the id is invalid."""
+
+    @abstractmethod
+    def find_all(self) -> List[PDFDocument]:
+        """Return all documents, newest first."""
+
+
+class PDFWriter(ABC):
+    """Write access to stored PDF documents."""
 
     @abstractmethod
     def create(self, document: PDFDocument) -> PDFDocument:
@@ -40,18 +52,6 @@ class PDFRepository(ABC):
         Raises:
             DuplicateDocumentException: If a document with the same checksum exists.
         """
-
-    @abstractmethod
-    def find_by_id(self, doc_id: str) -> Optional[PDFDocument]:
-        """Find a document by id; None if it does not exist or the id is invalid."""
-
-    @abstractmethod
-    def find_by_checksum(self, checksum: str) -> Optional[PDFDocument]:
-        """Find a document by its SHA-256 checksum."""
-
-    @abstractmethod
-    def find_all(self) -> List[PDFDocument]:
-        """Return all documents, newest first."""
 
     @abstractmethod
     def delete_by_id(self, doc_id: str) -> bool:

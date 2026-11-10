@@ -51,7 +51,6 @@ class PDFUploadResponse(BaseModel):
     file_size: int
     text_preview: str = Field(..., max_length=TEXT_PREVIEW_LENGTH)
     checksum: str
-    is_duplicate: bool = False
 
     @classmethod
     def from_document(cls, doc: PDFDocument) -> "PDFUploadResponse":
@@ -71,8 +70,7 @@ class PDFExtractResponse(BaseModel):
     id: str
     filename: str
     text: str
-    pages_extracted: int
-    total_pages: int
+    page_count: int
 
     @classmethod
     def from_document(cls, doc: PDFDocument) -> "PDFExtractResponse":
@@ -80,6 +78,5 @@ class PDFExtractResponse(BaseModel):
             id=doc.id,
             filename=doc.filename,
             text=doc.text_content,
-            pages_extracted=doc.page_count,
-            total_pages=doc.page_count,
+            page_count=doc.page_count,
         )

@@ -51,8 +51,8 @@ class TestUpload:
         assert body["page_count"] == 2
         assert body["file_size"] == len(content)
         assert body["checksum"] == hashlib.sha256(content).hexdigest()
-        assert body["is_duplicate"] is False
         assert "Hola mundo" in body["text_preview"]
+        assert set(body) == {"id", "filename", "page_count", "file_size", "checksum", "text_preview"}
 
     def test_persists_document_with_full_text(self, client, repository):
         doc_id = upload_id(client, "Contenido persistido")
@@ -131,7 +131,8 @@ class TestGetText:
         assert body["id"] == doc_id
         assert body["filename"] == "informe.pdf"
         assert "Texto completo" in body["text"]
-        assert body["pages_extracted"] == body["total_pages"] == 1
+        assert body["page_count"] == 1
+        assert set(body) == {"id", "filename", "text", "page_count"}
 
     def test_unknown_id_returns_404_problem_detail(self, client):
         resp = client.get(f"{URL}/{UNKNOWN_ID}/text")

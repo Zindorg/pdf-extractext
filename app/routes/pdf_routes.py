@@ -1,6 +1,8 @@
 """FastAPI routes for PDF operations."""
 
 import logging
+from pathlib import PurePath
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
@@ -99,17 +101,24 @@ def download_pdf_text(
     """
     logger.info("GET /pdfs/%s/download — downloading text", doc_id)
     doc = use_case.execute(doc_id)
-    download_filename = (
-        doc.filename.replace(".pdf", ".txt") if doc.filename.endswith(".pdf") else f"{doc.filename}.txt"
-    )
-
     return StreamingResponse(
         use_case.stream_text(doc.text_content),
-        media_type="text/plain",
-        headers={
-            "Content-Disposition": f'attachment; filename="{download_filename}"'
-        },
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": _attachment_header(doc.filename)},
     )
+
+
+def _attachment_header(pdf_filename: str) -> str:
+    """Build a safe Content-Disposition for the .txt version of a PDF name.
+
+    Uses an ASCII fallback plus the RFC 6266 ``filename*`` form so that
+    quotes, newlines or non-ASCII characters cannot break the header.
+    """
+    txt_name = f"{PurePath(pdf_filename).stem}.txt"
+    ascii_name = "".join(
+        c if c.isascii() and c.isprintable() and c not in '"\\' else "_" for c in txt_name
+    )
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(txt_name)}"
 
 
 @router.delete("/{doc_id}", status_code=204)

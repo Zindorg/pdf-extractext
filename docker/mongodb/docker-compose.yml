@@ -8,8 +8,8 @@ services:
       - mired
     environment:
       - TZ=${TZ}
-      - MONGO_INITDB_USERNAME=${USERNAME}
-      - MONGO_INITDB_PASSWORD=${PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${PASSWORD}
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"

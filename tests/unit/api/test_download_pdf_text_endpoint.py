@@ -47,3 +47,33 @@ class TestDownloadText:
         body = resp.json()
         assert body["title"] == "Not Found"
         assert body["status"] == 404
+
+
+class TestDownloadFilename:
+    """El nombre del .txt se deriva del PDF sin romper la cabecera HTTP."""
+
+    def _download(self, filename):
+        from unittest.mock import MagicMock
+
+        from fastapi.testclient import TestClient
+
+        from tests.unit.api.utils import _create_test_app, _make_document
+
+        queries = MagicMock()
+        queries.get_persisted_document.return_value = _make_document(filename=filename)
+        client = TestClient(_create_test_app(mock_queries=queries))
+        return client.get("/pdfs/507f1f77bcf86cd799439011/download")
+
+    def test_uppercase_extension_is_replaced(self):
+        resp = self._download("INFORME.PDF")
+        assert 'filename="INFORME.txt"' in resp.headers["content-disposition"]
+
+    def test_only_the_extension_is_replaced(self):
+        resp = self._download("mi.pdf.backup.pdf")
+        assert 'filename="mi.pdf.backup.txt"' in resp.headers["content-disposition"]
+
+    def test_quotes_and_non_ascii_are_escaped(self):
+        resp = self._download('año "final".pdf')
+        header = resp.headers["content-disposition"]
+        assert 'filename="a_o _final_.txt"' in header
+        assert "filename*=UTF-8''a%C3%B1o%20%22final%22.txt" in header

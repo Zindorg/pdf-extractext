@@ -53,3 +53,10 @@ def validate_content(file_content: bytes) -> None:
         logger.warning("Validation failed: empty file content")
         raise InvalidFileException("File is empty")
     logger.debug("Content validation passed (%d bytes)", len(file_content))
+
+
+def validate_size(file_content: bytes, max_size: int) -> None:
+    """Validate file content does not exceed the maximum allowed size."""
+    if len(file_content) > max_size:
+        logger.warning("Validation failed: file too large (%d > %d bytes)", len(file_content), max_size)
+        raise InvalidFileException(f"File too large: maximum size is {max_size} bytes")

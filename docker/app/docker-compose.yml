@@ -8,9 +8,10 @@ services:
       - mired
     environment:
       - TZ=${TZ}
+      - MONGODB_URI=${MONGODB_URI}
+    volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
-      - MONGODB_URI=${MONGODB_URI}
 
 networks:
   mired:
